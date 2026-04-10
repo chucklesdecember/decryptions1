@@ -142,7 +142,20 @@ Can you decode today's news? 📰`;
             </p>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
+            {onLeaderboard && (
+              <Button
+                type="button"
+                className="w-full min-h-[52px] gap-2 text-base font-semibold shadow-md bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white border-0"
+                onClick={() => {
+                  onOpenChange(false);
+                  onLeaderboard();
+                }}
+              >
+                <Trophy className="w-6 h-6 shrink-0" />
+                View leaderboard and results
+              </Button>
+            )}
             <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={handleShare} className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
                 <Share2 className="w-4 h-4" />
@@ -162,20 +175,6 @@ Can you decode today's news? 📰`;
                 )}
               </Button>
             </div>
-            {onLeaderboard && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => {
-                  onOpenChange(false);
-                  onLeaderboard();
-                }}
-              >
-                <Trophy className="w-4 h-4" />
-                Leaderboard
-              </Button>
-            )}
           </div>
         </div>
       </DialogContent>

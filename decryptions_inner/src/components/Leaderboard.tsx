@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { supabase } from "../lib/supabase";
+import { getStoredUsername } from "../lib/decryptionsStorage";
 
 interface LeaderboardProps {
   puzzleId: string;
@@ -55,7 +56,7 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
 
   useEffect(() => {
     setHasSubmitted(false);
-    setDisplayName("");
+    setDisplayName(getStoredUsername() ?? "");
     setError(null);
     void loadLeaderboard();
   }, [puzzleId]);

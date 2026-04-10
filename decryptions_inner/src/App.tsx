@@ -1,17 +1,27 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { RebusPuzzle } from "./components/RebusPuzzle";
 import { Timer } from "./components/Timer";
 import { InstructionsDialog } from "./components/InstructionsDialog";
 import { ShareDialog } from "./components/ShareDialog";
 import { LandingPage } from "./components/LandingPage";
 import { Leaderboard } from "./components/Leaderboard";
+import { UsernamePromptDialog } from "./components/UsernamePromptDialog";
 import { Button } from "./components/ui/button";
 import { Pause, Play } from "lucide-react";
 import { Toaster } from "./components/ui/sonner";
 import { currentPuzzle } from "./data/puzzles";
+import {
+  getStoredUsername,
+  setStoredUsername,
+  isPuzzleSolvedLocally,
+  getStoredSolveSeconds,
+  getStoredSolveHints,
+  markPuzzleSolvedLocally,
+} from "./lib/decryptionsStorage";
 
 export default function App() {
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isPuzzleComplete, setIsPuzzleComplete] = useState(false);
@@ -19,6 +29,16 @@ export default function App() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLeaderboardView, setShowLeaderboardView] = useState(false);
+  const [alreadySolvedOnDevice, setAlreadySolvedOnDevice] = useState(false);
+
+  const solveTimeRef = useRef(0);
+  const hintsUsedRef = useRef(0);
+  useEffect(() => {
+    solveTimeRef.current = solveTime;
+  }, [solveTime]);
+  useEffect(() => {
+    hintsUsedRef.current = hintsUsed;
+  }, [hintsUsed]);
 
   const isTimerActive =
     !showLandingPage &&
@@ -30,6 +50,11 @@ export default function App() {
     if (!isPuzzleComplete) {
       setIsPuzzleComplete(true);
       setShowShareDialog(true);
+      markPuzzleSolvedLocally(
+        currentPuzzle.id,
+        solveTimeRef.current,
+        hintsUsedRef.current,
+      );
     }
   }, [isPuzzleComplete]);
 
@@ -44,15 +69,39 @@ export default function App() {
     setIsPaused((prev) => !prev);
   };
 
-  const handleStartGame = () => {
+  const beginGameSession = useCallback(() => {
     setShowLandingPage(false);
+    setShowUsernamePrompt(false);
     setIsPaused(false);
     setIsInstructionsOpen(false);
-    setIsPuzzleComplete(false);
-    setSolveTime(0);
-    setHintsUsed(0);
     setShowShareDialog(false);
     setShowLeaderboardView(false);
+
+    const id = currentPuzzle.id;
+    if (isPuzzleSolvedLocally(id)) {
+      setIsPuzzleComplete(true);
+      setSolveTime(getStoredSolveSeconds(id) ?? 0);
+      setHintsUsed(getStoredSolveHints(id) ?? 0);
+      setAlreadySolvedOnDevice(true);
+    } else {
+      setIsPuzzleComplete(false);
+      setSolveTime(0);
+      setHintsUsed(0);
+      setAlreadySolvedOnDevice(false);
+    }
+  }, []);
+
+  const handlePlayClick = () => {
+    if (getStoredUsername()) {
+      beginGameSession();
+    } else {
+      setShowUsernamePrompt(true);
+    }
+  };
+
+  const handleUsernameSave = (username: string) => {
+    setStoredUsername(username);
+    beginGameSession();
   };
 
   const handleInstructionsOpenChange = (open: boolean) => {
@@ -60,7 +109,12 @@ export default function App() {
   };
 
   if (showLandingPage) {
-    return <LandingPage onStartGame={handleStartGame} />;
+    return (
+      <>
+        <LandingPage onStartGame={handlePlayClick} />
+        <UsernamePromptDialog open={showUsernamePrompt} onSave={handleUsernameSave} />
+      </>
+    );
   }
 
   return (
@@ -169,6 +223,7 @@ export default function App() {
                   isPaused={isPaused}
                   hints={currentPuzzle.hints}
                   onUseHint={handleUseHint}
+                  interactionLocked={alreadySolvedOnDevice}
                 />
               </div>
 
@@ -189,10 +244,14 @@ export default function App() {
                 <div className="p-4 bg-white rounded-xl shadow-md text-center border-2 border-green-200 mb-4">
                   <p className="text-2xl mb-1">🎉</p>
                   <h3 className="text-green-700 mb-1">
-                    Congratulations!
+                    {alreadySolvedOnDevice
+                      ? "Already completed on this device"
+                      : "Congratulations!"}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    You've decoded today's headline:{" "}
+                    {alreadySolvedOnDevice
+                      ? "You already solved this puzzle on this device. "
+                      : "You've decoded today's headline: "}
                     <span className="text-primary">
                       "{currentPuzzle.headline}"
                     </span>

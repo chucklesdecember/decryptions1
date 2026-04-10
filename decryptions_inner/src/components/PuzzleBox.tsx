@@ -20,10 +20,25 @@ interface PuzzleBoxProps {
   isPaused?: boolean;
   hint: string;
   onRevealHint: () => void;
+  /** Read-only: puzzle already completed on this device */
+  locked?: boolean;
 }
 
 export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
-  ({ clues, answer, userInput, onInputChange, isCorrect, isPaused = false, hint, onRevealHint }, ref) => {
+  (
+    {
+      clues,
+      answer,
+      userInput,
+      onInputChange,
+      isCorrect,
+      isPaused = false,
+      hint,
+      onRevealHint,
+      locked = false,
+    },
+    ref,
+  ) => {
     return (
       <div className="flex flex-col gap-2">
         {/* Clue Display - Card Style with per-box hint */}
@@ -32,7 +47,14 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
           <div className="absolute top-2 right-2 z-20">
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="h-7 w-7" onClick={onRevealHint}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={onRevealHint}
+                  disabled={locked}
+                  type="button"
+                >
                   <Lightbulb className="w-4 h-4" />
                 </Button>
               </DialogTrigger>
@@ -93,7 +115,8 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
               ? 'bg-red-50 border-red-500 text-red-700'
               : 'bg-white border-border hover:border-primary/50 focus:border-primary'
           }`}
-          disabled={isCorrect || isPaused}
+          disabled={isCorrect || isPaused || locked}
+          readOnly={locked}
         />
       </div>
     );

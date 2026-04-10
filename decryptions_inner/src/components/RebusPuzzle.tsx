@@ -20,6 +20,8 @@ interface RebusPuzzleProps {
   isPaused?: boolean;
   hints: string[];
   onUseHint: () => void;
+  /** When true, show solved answers read-only and do not fire onComplete */
+  interactionLocked?: boolean;
 }
 
 export function RebusPuzzle({
@@ -29,28 +31,40 @@ export function RebusPuzzle({
   isPaused = false,
   hints,
   onUseHint,
+  interactionLocked = false,
 }: RebusPuzzleProps) {
-  const [userInputs, setUserInputs] = useState<string[]>(words.map(() => ''));
-  const [correctAnswers, setCorrectAnswers] = useState<boolean[]>(words.map(() => false));
+  const [userInputs, setUserInputs] = useState<string[]>(() =>
+    interactionLocked ? words.map((w) => w.answer.toUpperCase()) : words.map(() => ''),
+  );
+  const [correctAnswers, setCorrectAnswers] = useState<boolean[]>(() =>
+    interactionLocked ? words.map(() => true) : words.map(() => false),
+  );
   const [revealedHints, setRevealedHints] = useState<boolean[]>(words.map(() => false));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
-    setUserInputs(words.map(() => ''));
-    setCorrectAnswers(words.map(() => false));
-    setRevealedHints(words.map(() => false));
+    if (interactionLocked) {
+      setUserInputs(words.map((w) => w.answer.toUpperCase()));
+      setCorrectAnswers(words.map(() => true));
+      setRevealedHints(words.map(() => false));
+    } else {
+      setUserInputs(words.map(() => ''));
+      setCorrectAnswers(words.map(() => false));
+      setRevealedHints(words.map(() => false));
+    }
     inputRefs.current = [];
-  }, [words]);
+  }, [words, interactionLocked]);
 
   useEffect(() => {
-    if (!completeOnAllWords) return;
+    if (!completeOnAllWords || interactionLocked) return;
     const allCorrect = correctAnswers.every((isCorrect) => isCorrect);
     if (allCorrect && correctAnswers.length > 0) {
       onComplete();
     }
-  }, [completeOnAllWords, correctAnswers, onComplete]);
+  }, [completeOnAllWords, interactionLocked, correctAnswers, onComplete]);
 
   const handleInputChange = (index: number, value: string) => {
+    if (interactionLocked) return;
     const newInputs = [...userInputs];
     newInputs[index] = value;
     setUserInputs(newInputs);
@@ -90,6 +104,7 @@ export function RebusPuzzle({
           isPaused={isPaused}
           hint={hints[index]}
           onRevealHint={() => {
+            if (interactionLocked) return;
             if (!revealedHints[index]) {
               const updated = [...revealedHints];
               updated[index] = true;
@@ -97,6 +112,7 @@ export function RebusPuzzle({
               onUseHint();
             }
           }}
+          locked={interactionLocked}
         />
       ))}
     </div>
