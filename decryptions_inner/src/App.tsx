@@ -227,25 +227,23 @@ export default function App() {
                 />
               </div>
 
-              {/* Controls */}
+              {/* Controls — Leaderboard is always available; Share only after solve */}
               <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+                <Button
+                  type="button"
+                  onClick={() => setShowLeaderboardView(true)}
+                  className="min-h-[48px] gap-2 px-5 text-base font-semibold opacity-100 bg-black text-white border-2 border-gray-800 shadow-sm hover:bg-gray-800 hover:shadow-md hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-[box-shadow,background-color,opacity] duration-150"
+                >
+                  <Trophy className="w-5 h-5 shrink-0" />
+                  Leaderboard
+                </Button>
                 {isPuzzleComplete && (
-                  <>
-                    <Button
-                      type="button"
-                      onClick={() => setShowLeaderboardView(true)}
-                      className="min-h-[48px] gap-2 px-5 text-base font-semibold bg-black text-white border-2 border-gray-800 shadow-sm hover:bg-gray-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-[box-shadow,background-color] duration-150"
-                    >
-                      <Trophy className="w-5 h-5 shrink-0" />
-                      Leaderboard
-                    </Button>
-                    <Button
-                      onClick={() => setShowShareDialog(true)}
-                      className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-                    >
-                      Share Results
-                    </Button>
-                  </>
+                  <Button
+                    onClick={() => setShowShareDialog(true)}
+                    className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+                  >
+                    Share Results
+                  </Button>
                 )}
               </div>
 
