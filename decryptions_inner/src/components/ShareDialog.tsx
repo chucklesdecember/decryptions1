@@ -15,11 +15,10 @@ interface ShareDialogProps {
   onOpenChange: (open: boolean) => void;
   solveTime: number;
   hintsUsed: number;
-  headline: string;
   onLeaderboard?: () => void;
 }
 
-export function ShareDialog({ isOpen, onOpenChange, solveTime, hintsUsed, headline, onLeaderboard }: ShareDialogProps) {
+export function ShareDialog({ isOpen, onOpenChange, solveTime, hintsUsed, onLeaderboard }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -30,14 +29,14 @@ export function ShareDialog({ isOpen, onOpenChange, solveTime, hintsUsed, headli
   };
 
   const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const shareText = `🔐 Decryptions - ${dateStr}
+  const shareText = `🔐 Decryptions — ${dateStr}
 
-Answer: "${headline}"
+Today's headline is hidden behind a rebus puzzle — come decode the news!
 
-⏱️ ${formatTime(solveTime)}
+⏱️ My time: ${formatTime(solveTime)}
 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''} used
 
-Can you decode today's news? 📰`;
+Can you beat that? Play today's Decryptions puzzle. 📰`;
 
   const handleCopy = () => {
     if (!textareaRef.current) return;
@@ -135,7 +134,7 @@ Can you decode today's news? 📰`;
               readOnly
               onClick={(e) => e.currentTarget.select()}
               className="w-full text-sm whitespace-pre-line bg-transparent border-none outline-none resize-none cursor-pointer"
-              rows={8}
+              rows={7}
             />
             <p className="text-xs text-muted-foreground mt-2 text-center">
               Click text to select • Cmd/Ctrl+C to copy
@@ -146,7 +145,7 @@ Can you decode today's news? 📰`;
             {onLeaderboard && (
               <Button
                 type="button"
-                className="w-full min-h-[52px] gap-2 text-base font-semibold shadow-md bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:via-orange-600 hover:to-amber-700 text-white border-0"
+                className="w-full min-h-[52px] gap-2 text-base font-semibold bg-amber-600 text-white border-2 border-amber-800/40 shadow-sm hover:bg-amber-700 hover:shadow-md focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-[box-shadow,background-color] duration-150"
                 onClick={() => {
                   onOpenChange(false);
                   onLeaderboard();

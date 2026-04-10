@@ -105,17 +105,33 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
       )}
 
       {supabase && isSolved && !hasSubmitted && (
-        <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
-          <Input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Display name"
-            maxLength={40}
-            disabled={isSubmitting}
-          />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit"}
-          </Button>
+        <form
+          onSubmit={handleSubmit}
+          className="mb-6 rounded-xl border-2 border-amber-200 bg-gradient-to-b from-amber-50 to-orange-50/80 p-4 sm:p-5 shadow-sm"
+        >
+          <h4 className="text-lg font-semibold text-foreground mb-1">Join the leaderboard</h4>
+          <p className="text-sm text-muted-foreground mb-4">
+            Enter a username to join the leaderboard. It will appear next to your time.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Your username"
+              maxLength={40}
+              disabled={isSubmitting}
+              className="h-12 text-base sm:flex-1 border-2 border-amber-200/80 bg-white focus-visible:ring-amber-500"
+              autoComplete="username"
+            />
+            <Button
+              type="submit"
+              size="lg"
+              disabled={isSubmitting}
+              className="h-12 min-w-[140px] shrink-0 px-6 text-base font-semibold bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 shadow-sm"
+            >
+              {isSubmitting ? "Submitting..." : "Submit score"}
+            </Button>
+          </div>
         </form>
       )}
 

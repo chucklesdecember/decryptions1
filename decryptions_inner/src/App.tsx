@@ -7,7 +7,7 @@ import { LandingPage } from "./components/LandingPage";
 import { Leaderboard } from "./components/Leaderboard";
 import { UsernamePromptDialog } from "./components/UsernamePromptDialog";
 import { Button } from "./components/ui/button";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, Trophy } from "lucide-react";
 import { Toaster } from "./components/ui/sonner";
 import { currentPuzzle } from "./data/puzzles";
 import {
@@ -230,12 +230,22 @@ export default function App() {
               {/* Controls */}
               <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                 {isPuzzleComplete && (
-                  <Button
-                    onClick={() => setShowShareDialog(true)}
-                    className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-                  >
-                    Share Results
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      onClick={() => setShowLeaderboardView(true)}
+                      className="min-h-[48px] gap-2 px-5 text-base font-semibold bg-amber-600 text-white border-2 border-amber-800/40 shadow-sm hover:bg-amber-700 hover:shadow-md focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-[box-shadow,background-color] duration-150"
+                    >
+                      <Trophy className="w-5 h-5 shrink-0" />
+                      Leaderboard
+                    </Button>
+                    <Button
+                      onClick={() => setShowShareDialog(true)}
+                      className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+                    >
+                      Share Results
+                    </Button>
+                  </>
                 )}
               </div>
 
@@ -292,7 +302,6 @@ export default function App() {
         onOpenChange={setShowShareDialog}
         solveTime={solveTime}
         hintsUsed={hintsUsed}
-        headline={currentPuzzle.headline}
         onLeaderboard={() => {
           setShowShareDialog(false);
           setShowLeaderboardView(true);
