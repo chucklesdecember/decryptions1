@@ -4,6 +4,7 @@ import { Timer } from "./components/Timer";
 import { InstructionsDialog } from "./components/InstructionsDialog";
 import { ShareDialog } from "./components/ShareDialog";
 import { LandingPage } from "./components/LandingPage";
+import { Leaderboard } from "./components/Leaderboard";
 import { Button } from "./components/ui/button";
 import { Pause, Play } from "lucide-react";
 import { Toaster } from "./components/ui/sonner";
@@ -17,6 +18,7 @@ export default function App() {
   const [solveTime, setSolveTime] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showLeaderboardView, setShowLeaderboardView] = useState(false);
 
   const isTimerActive =
     !showLandingPage &&
@@ -50,6 +52,7 @@ export default function App() {
     setSolveTime(0);
     setHintsUsed(0);
     setShowShareDialog(false);
+    setShowLeaderboardView(false);
   };
 
   const handleInstructionsOpenChange = (open: boolean) => {
@@ -108,53 +111,95 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className={`flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${isInstructionsOpen ? 'blur-sm' : ''}`}>
+      <main
+        className={`flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${isInstructionsOpen ? "blur-sm" : ""}`}
+      >
         <div className="max-w-5xl mx-auto px-4 py-6 min-h-full flex flex-col">
-          <div className="mb-4 text-center">
-            <h2 className="text-primary mb-0.5">
-              Today's Headline
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Solve the rebus puzzle to reveal the news!
-            </p>
-          </div>
+          {showLeaderboardView ? (
+            <>
+              <div className="flex items-center gap-3 mb-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLeaderboardView(false)}
+                >
+                  Back to puzzle
+                </Button>
+                <h2 className="text-primary mb-0">Results</h2>
+              </div>
 
-          <div className="flex items-center justify-center mb-6">
-            <RebusPuzzle
-              words={currentPuzzle.words}
-              onComplete={handlePuzzleComplete}
-              isPaused={isPaused}
-              hints={currentPuzzle.hints}
-              onUseHint={handleUseHint}
-            />
-          </div>
+              <div className="p-4 bg-white rounded-xl shadow-md border border-border mb-4">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {currentPuzzle.category} · {currentPuzzle.date}
+                </p>
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Headline: </span>
+                  <span className="text-primary font-medium">{currentPuzzle.headline}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Your time:{" "}
+                  <span className="tabular-nums text-foreground">
+                    {Math.floor(solveTime / 60)}:{(solveTime % 60).toString().padStart(2, "0")}
+                  </span>
+                </p>
+              </div>
 
-          {/* Controls */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-            {isPuzzleComplete && (
-              <Button
-                onClick={() => setShowShareDialog(true)}
-                className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-              >
-                Share Results
-              </Button>
-            )}
-          </div>
+              <Leaderboard
+                puzzleId={currentPuzzle.id}
+                solveTime={solveTime}
+                isSolved={isPuzzleComplete}
+              />
+            </>
+          ) : (
+            <>
+              <div className="mb-4 text-center">
+                <h2 className="text-primary mb-0.5">
+                  Today's Headline
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Solve the rebus puzzle to reveal the news!
+                </p>
+              </div>
 
-          {/* Success Message */}
-          {isPuzzleComplete && (
-            <div className="p-4 bg-white rounded-xl shadow-md text-center border-2 border-green-200 mb-4">
-              <p className="text-2xl mb-1">🎉</p>
-              <h3 className="text-green-700 mb-1">
-                Congratulations!
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                You've decoded today's headline:{" "}
-                <span className="text-primary">
-                  "{currentPuzzle.headline}"
-                </span>
-              </p>
-            </div>
+              <div className="flex items-center justify-center mb-6">
+                <RebusPuzzle
+                  words={currentPuzzle.words}
+                  onComplete={handlePuzzleComplete}
+                  isPaused={isPaused}
+                  hints={currentPuzzle.hints}
+                  onUseHint={handleUseHint}
+                />
+              </div>
+
+              {/* Controls */}
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+                {isPuzzleComplete && (
+                  <Button
+                    onClick={() => setShowShareDialog(true)}
+                    className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+                  >
+                    Share Results
+                  </Button>
+                )}
+              </div>
+
+              {/* Success Message */}
+              {isPuzzleComplete && (
+                <div className="p-4 bg-white rounded-xl shadow-md text-center border-2 border-green-200 mb-4">
+                  <p className="text-2xl mb-1">🎉</p>
+                  <h3 className="text-green-700 mb-1">
+                    Congratulations!
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    You've decoded today's headline:{" "}
+                    <span className="text-primary">
+                      "{currentPuzzle.headline}"
+                    </span>
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -189,6 +234,10 @@ export default function App() {
         solveTime={solveTime}
         hintsUsed={hintsUsed}
         headline={currentPuzzle.headline}
+        onLeaderboard={() => {
+          setShowShareDialog(false);
+          setShowLeaderboardView(true);
+        }}
       />
 
       <Toaster richColors position="top-center" />

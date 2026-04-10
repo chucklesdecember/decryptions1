@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Button } from './ui/button';
-import { Share2, Check, Copy } from 'lucide-react';
+import { Share2, Check, Copy, Trophy } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -16,9 +16,10 @@ interface ShareDialogProps {
   solveTime: number;
   hintsUsed: number;
   headline: string;
+  onLeaderboard?: () => void;
 }
 
-export function ShareDialog({ isOpen, onOpenChange, solveTime, hintsUsed, headline }: ShareDialogProps) {
+export function ShareDialog({ isOpen, onOpenChange, solveTime, hintsUsed, headline, onLeaderboard }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -141,24 +142,40 @@ Can you decode today's news? 📰`;
             </p>
           </div>
 
-          <div className="flex gap-2">
-            <Button onClick={handleShare} className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
-              <Share2 className="w-4 h-4" />
-              Share Result
-            </Button>
-            <Button onClick={handleCopy} variant="outline" className="gap-2 min-w-[100px]">
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-green-600" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  Copy
-                </>
-              )}
-            </Button>
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={handleShare} className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
+                <Share2 className="w-4 h-4" />
+                Share Result
+              </Button>
+              <Button onClick={handleCopy} variant="outline" className="gap-2 sm:min-w-[100px]">
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 text-green-600" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+            </div>
+            {onLeaderboard && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => {
+                  onOpenChange(false);
+                  onLeaderboard();
+                }}
+              >
+                <Trophy className="w-4 h-4" />
+                Leaderboard
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
