@@ -145,7 +145,7 @@ Can you beat that? Play today's Decryptions puzzle. 📰`;
             {onLeaderboard && (
               <Button
                 type="button"
-                className="w-full min-h-[52px] gap-2 text-base font-semibold bg-amber-600 text-white border-2 border-amber-800/40 shadow-sm hover:bg-amber-700 hover:shadow-md focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-[box-shadow,background-color] duration-150"
+                className="w-full min-h-[52px] gap-2 text-base font-semibold bg-black text-white border-2 border-gray-800 shadow-sm hover:bg-gray-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-[box-shadow,background-color] duration-150"
                 onClick={() => {
                   onOpenChange(false);
                   onLeaderboard();

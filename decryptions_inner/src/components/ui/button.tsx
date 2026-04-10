@@ -51,7 +51,7 @@ const Button = React.forwardRef<
     <Comp
       ref={ref}
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, shape, className }))}
+      className={cn(buttonVariants({ variant, size, shape }), className)}
       {...props}
     />
   );
