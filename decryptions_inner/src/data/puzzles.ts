@@ -20,6 +20,56 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-04-11",
+    headline: "Melania Denies Epstein Ties",
+    date: "April 11, 2026",
+    category: "World News",
+    words: [
+      {
+        answer: "MELANIA",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/caramel.png", alt: "Caramel" },
+          { type: "operator", content: "- CARA) + (" },
+          { type: "image", content: "/fan.png", alt: "Fan" },
+          { type: "operator", content: "- f) + IA" },
+        ],
+      },
+      {
+        answer: "DENIES",
+        clues: [
+          { type: "image", content: "/den.png", alt: "Den" },
+          { type: "operator", content: " + " },
+          { type: "image", content: "/eyes2.jpg", alt: "Eyes" },
+        ],
+      },
+      {
+        answer: "EPSTEIN",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/bicep.png", alt: "Bicep" },
+          { type: "operator", content: "-" },
+          { type: "image", content: "/bic.png", alt: "bic" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/stem.png", alt: "Stem" },
+          { type: "operator", content: "- m) + (" },
+          { type: "image", content: "/tin.png", alt: "Tin" },
+          { type: "operator", content: "- t)" },
+        ],
+      },
+      {
+        answer: "TIES",
+        clues: [{ type: "image", content: "/ties4.png", alt: "Ties" }],
+      },
+    ],
+    hints: [
+      "(A chewy candy - first four letters) + (team devotee - sixth letter in alphabet) + 2001 Spielberg film backwards",
+      "Dad's refuge + spiders can't blink theirs",
+      "(Flexible muscle - pen company) + (sunflower's stalk - 2n) + (metal in bronze, often - it comes in small bags)",
+      "Bolos and ascots",
+    ],
+  },
+  {
     id: "2025-10-20-french-treasures-stolen",
     headline: "French Treasures Stolen",
     date: "October 20, 2025",
