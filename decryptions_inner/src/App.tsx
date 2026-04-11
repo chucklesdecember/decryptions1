@@ -130,7 +130,11 @@ export default function App() {
       <>
         <LandingPage onStartGame={handlePlayClick} />
         <UsernamePromptDialog open={showUsernamePrompt} onSave={handleUsernameSave} />
-        <InstructionsDialog open={isInstructionsOpen} onOpenChange={handleInstructionsOpenChange} />
+        <InstructionsDialog
+          open={isInstructionsOpen}
+          onOpenChange={handleInstructionsOpenChange}
+          showPlayButton
+        />
       </>
     );
   }

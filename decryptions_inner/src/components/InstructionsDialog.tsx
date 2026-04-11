@@ -8,15 +8,17 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { Button } from './ui/button';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Play } from 'lucide-react';
 
 interface InstructionsDialogProps {
   onOpenChange?: (open: boolean) => void;
   /** When set, dialog is controlled (no toolbar trigger); parent drives `open`. */
   open?: boolean;
+  /** Big primary action at bottom (e.g. first-time onboarding); still keep dialog close (X). */
+  showPlayButton?: boolean;
 }
 
-export function InstructionsDialog({ onOpenChange, open }: InstructionsDialogProps) {
+export function InstructionsDialog({ onOpenChange, open, showPlayButton }: InstructionsDialogProps) {
   const isControlled = open !== undefined;
   return (
     <Dialog open={isControlled ? open : undefined} onOpenChange={onOpenChange}>
@@ -69,6 +71,19 @@ export function InstructionsDialog({ onOpenChange, open }: InstructionsDialogPro
             </p>
           </div>
         </div>
+        {showPlayButton && (
+          <div className="border-t pt-4 mt-2">
+            <Button
+              type="button"
+              size="xl"
+              className="w-full text-base font-semibold"
+              onClick={() => onOpenChange?.(false)}
+            >
+              <Play className="size-5" />
+              Play
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
