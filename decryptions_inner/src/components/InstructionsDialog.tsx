@@ -12,16 +12,21 @@ import { HelpCircle } from 'lucide-react';
 
 interface InstructionsDialogProps {
   onOpenChange?: (open: boolean) => void;
+  /** When set, dialog is controlled (no toolbar trigger); parent drives `open`. */
+  open?: boolean;
 }
 
-export function InstructionsDialog({ onOpenChange }: InstructionsDialogProps) {
+export function InstructionsDialog({ onOpenChange, open }: InstructionsDialogProps) {
+  const isControlled = open !== undefined;
   return (
-    <Dialog onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <HelpCircle className="w-5 h-5" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isControlled ? open : undefined} onOpenChange={onOpenChange}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="icon">
+            <HelpCircle className="w-5 h-5" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>How to Play Decryptions</DialogTitle>

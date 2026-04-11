@@ -33,6 +33,8 @@ export default function App() {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLeaderboardView, setShowLeaderboardView] = useState(false);
   const [alreadySolvedOnDevice, setAlreadySolvedOnDevice] = useState(false);
+  /** After first-time username save: wait until instructions close, then call `beginGameSession`. */
+  const pendingFirstStartAfterInstructionsRef = useRef(false);
 
   const solveTimeRef = useRef(0);
   const hintsUsedRef = useRef(0);
@@ -110,11 +112,17 @@ export default function App() {
 
   const handleUsernameSave = (username: string) => {
     setStoredUsername(username);
-    beginGameSession();
+    setShowUsernamePrompt(false);
+    pendingFirstStartAfterInstructionsRef.current = true;
+    setIsInstructionsOpen(true);
   };
 
   const handleInstructionsOpenChange = (open: boolean) => {
     setIsInstructionsOpen(open);
+    if (!open && pendingFirstStartAfterInstructionsRef.current) {
+      pendingFirstStartAfterInstructionsRef.current = false;
+      beginGameSession();
+    }
   };
 
   if (showLandingPage) {
@@ -122,6 +130,7 @@ export default function App() {
       <>
         <LandingPage onStartGame={handlePlayClick} />
         <UsernamePromptDialog open={showUsernamePrompt} onSave={handleUsernameSave} />
+        <InstructionsDialog open={isInstructionsOpen} onOpenChange={handleInstructionsOpenChange} />
       </>
     );
   }
