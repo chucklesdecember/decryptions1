@@ -225,6 +225,7 @@ export default function App() {
                 puzzleId={currentPuzzle.id}
                 solveTime={solveTime}
                 isSolved={isPuzzleComplete}
+                hintsUsed={hintsUsed}
               />
             </>
           ) : (

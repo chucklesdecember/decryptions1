@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Lightbulb } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { getStoredUsername } from "../lib/decryptionsStorage";
 import posthog from "posthog-js";
@@ -9,6 +10,8 @@ interface LeaderboardProps {
   puzzleId: string;
   solveTime: number;
   isSolved: boolean;
+  /** Hint count for this session (stored with leaderboard submission). */
+  hintsUsed: number;
 }
 
 interface SolveEntry {
@@ -16,9 +19,10 @@ interface SolveEntry {
   display_name: string;
   time_seconds: number;
   created_at: string;
+  hints_used: number | null;
 }
 
-export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps) {
+export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: LeaderboardProps) {
   const [entries, setEntries] = useState<SolveEntry[]>([]);
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +45,7 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
     setIsLoading(true);
     const { data, error: selectError } = await supabase
       .from("solves")
-      .select("id, display_name, time_seconds, created_at")
+      .select("id, display_name, time_seconds, created_at, hints_used")
       .eq("puzzle_id", puzzleId)
       .order("time_seconds", { ascending: true })
       .order("created_at", { ascending: true })
@@ -75,10 +79,12 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
     setError(null);
     setIsSubmitting(true);
 
+    const hintCount = Math.max(0, Math.min(99, Math.floor(hintsUsed)));
     const { error: insertError } = await supabase.from("solves").insert({
       puzzle_id: puzzleId,
       display_name: trimmed,
       time_seconds: solveTime,
+      hints_used: hintCount,
     });
 
     if (insertError) {
@@ -127,9 +133,10 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
             />
             <Button
               type="submit"
+              variant="black"
               size="lg"
               disabled={isSubmitting}
-              className="h-12 min-w-[140px] shrink-0 bg-black px-6 text-base font-semibold text-white shadow-sm hover:bg-gray-900 disabled:opacity-50"
+              className="h-12 min-w-[140px] shrink-0 border-2 border-neutral-950 bg-neutral-900 px-6 text-base font-semibold text-white shadow-md hover:bg-neutral-800 disabled:opacity-50 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
             >
               {isSubmitting ? "Submitting..." : "Submit score"}
             </Button>
@@ -151,18 +158,38 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
         <p className="text-sm font-medium text-gray-700">No solves yet. Be the first!</p>
       ) : (
         <div className="space-y-2">
-          {entries.map((entry, index) => (
-            <div
-              key={entry.id}
-              className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="w-6 tabular-nums text-xs font-semibold text-gray-600">{index + 1}.</span>
-                <span className="truncate text-sm font-medium text-black">{entry.display_name}</span>
+          {entries.map((entry, index) => {
+            const nHints = entry.hints_used ?? 0;
+            return (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="w-6 shrink-0 tabular-nums text-xs font-semibold text-gray-600">{index + 1}.</span>
+                  <span className="truncate text-sm font-medium text-black">{entry.display_name}</span>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {nHints > 0 && (
+                    <span
+                      className="inline-flex items-center gap-0.5"
+                      aria-label={`${nHints} hint${nHints !== 1 ? "s" : ""} used`}
+                      title={`${nHints} hint${nHints !== 1 ? "s" : ""} used`}
+                    >
+                      {Array.from({ length: nHints }).map((_, i) => (
+                        <Lightbulb
+                          key={`${entry.id}-h-${i}`}
+                          className="size-3.5 shrink-0 text-amber-500"
+                          aria-hidden
+                        />
+                      ))}
+                    </span>
+                  )}
+                  <span className="tabular-nums text-sm font-semibold text-black">{formatTime(entry.time_seconds)}</span>
+                </div>
               </div>
-              <span className="tabular-nums text-sm font-semibold text-black">{formatTime(entry.time_seconds)}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

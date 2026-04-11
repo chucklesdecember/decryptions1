@@ -1,10 +1,11 @@
 /**
  * Shared Tailwind classes for Leaderboard navigation CTAs (puzzle screen, share modal).
- * Always use with <Button variant="black" /> so the default variant never applies
- * bg-primary / text-primary-foreground (which reads as a faint or off-brand CTA).
+ * Explicit dark surface + white text so contrast stays strong in light and `.dark` themes
+ * (default `bg-primary` is nearly white in dark mode and caused white-on-white with `text-white`).
  */
 export const LEADERBOARD_CTA_BUTTON_CLASSNAME =
-  "border-2 border-gray-800 shadow-sm " +
-  "hover:bg-gray-800 hover:text-white hover:shadow-md " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 " +
-  "font-semibold text-base [&_svg]:text-white";
+  "bg-neutral-900 text-white border-2 border-neutral-950 shadow-md " +
+  "hover:bg-neutral-800 hover:text-white " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 " +
+  "font-semibold text-base [&_svg]:text-white " +
+  "dark:bg-neutral-900 dark:text-white dark:border-neutral-950 dark:hover:bg-neutral-800";
