@@ -92,14 +92,14 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
   };
 
   return (
-    <section className="bg-black text-white rounded-xl shadow-lg p-4 sm:p-5 border-2 border-gray-800 mb-4">
+    <section className="rounded-xl border border-gray-300 bg-white p-4 text-gray-900 shadow-md sm:p-5 mb-4">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-white mb-1">Leaderboard</h3>
-        <p className="text-sm text-gray-400">Fastest times for this puzzle</p>
+        <h3 className="mb-1 text-xl font-semibold text-black">Leaderboard</h3>
+        <p className="text-sm font-medium text-gray-600">Fastest times for this puzzle</p>
       </div>
 
       {!supabase && (
-        <p className="text-sm text-gray-300">
+        <p className="text-sm font-medium text-gray-700">
           Leaderboard is unavailable. Add Supabase env vars to enable it.
         </p>
       )}
@@ -107,10 +107,10 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
       {supabase && isSolved && !hasSubmitted && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 rounded-xl border border-gray-700 bg-zinc-950 p-4 sm:p-5"
+          className="mb-6 rounded-lg border-2 border-gray-200 bg-gray-50 p-4 sm:p-5"
         >
-          <h4 className="text-lg font-semibold text-white mb-1">Join the leaderboard</h4>
-          <p className="text-sm text-gray-400 mb-4">
+          <h4 className="mb-1 text-lg font-semibold text-black">Join the leaderboard</h4>
+          <p className="mb-4 text-sm text-gray-700">
             Enter a username to join the leaderboard. It will appear next to your time.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
@@ -120,14 +120,14 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
               placeholder="Your username"
               maxLength={40}
               disabled={isSubmitting}
-              className="h-12 text-base sm:flex-1 border-2 border-gray-600 bg-white text-black placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+              className="h-12 border-2 border-gray-300 bg-white text-base text-black placeholder:text-gray-500 focus-visible:border-gray-900 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 sm:flex-1"
               autoComplete="username"
             />
             <Button
               type="submit"
               size="lg"
               disabled={isSubmitting}
-              className="h-12 min-w-[140px] shrink-0 px-6 text-base font-semibold bg-white text-black border-2 border-gray-200 hover:bg-gray-100 shadow-sm disabled:opacity-50"
+              className="h-12 min-w-[140px] shrink-0 bg-black px-6 text-base font-semibold text-white shadow-sm hover:bg-gray-900 disabled:opacity-50"
             >
               {isSubmitting ? "Submitting..." : "Submit score"}
             </Button>
@@ -136,29 +136,29 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
       )}
 
       {supabase && isSolved && hasSubmitted && (
-        <p className="text-sm text-green-400 mb-3">
+        <p className="mb-3 text-sm font-medium text-green-800">
           Score submitted: {formatTime(solveTime)}
         </p>
       )}
 
-      {error && <p className="text-sm text-red-400 mb-3">{error}</p>}
+      {error && <p className="mb-3 text-sm font-medium text-red-700">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-gray-400">Loading leaderboard...</p>
+        <p className="text-sm font-medium text-gray-700">Loading leaderboard...</p>
       ) : entries.length === 0 ? (
-        <p className="text-sm text-gray-400">No solves yet. Be the first!</p>
+        <p className="text-sm font-medium text-gray-700">No solves yet. Be the first!</p>
       ) : (
         <div className="space-y-2">
           {entries.map((entry, index) => (
             <div
               key={entry.id}
-              className="flex items-center justify-between rounded-lg border border-gray-800 bg-zinc-950 px-3 py-2.5 text-white"
+              className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs text-gray-500 w-6 tabular-nums">{index + 1}.</span>
-                <span className="text-sm truncate text-white">{entry.display_name}</span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="w-6 tabular-nums text-xs font-semibold text-gray-600">{index + 1}.</span>
+                <span className="truncate text-sm font-medium text-black">{entry.display_name}</span>
               </div>
-              <span className="text-sm tabular-nums text-gray-200">{formatTime(entry.time_seconds)}</span>
+              <span className="tabular-nums text-sm font-semibold text-black">{formatTime(entry.time_seconds)}</span>
             </div>
           ))}
         </div>

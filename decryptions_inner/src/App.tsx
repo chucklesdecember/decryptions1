@@ -7,6 +7,8 @@ import { LandingPage } from "./components/LandingPage";
 import { Leaderboard } from "./components/Leaderboard";
 import { UsernamePromptDialog } from "./components/UsernamePromptDialog";
 import { Button } from "./components/ui/button";
+import { cn } from "./components/ui/utils";
+import { LEADERBOARD_CTA_BUTTON_CLASSNAME } from "./lib/leaderboardCtaButton";
 import { Pause, Play, Trophy } from "lucide-react";
 import { Toaster } from "./components/ui/sonner";
 import { currentPuzzle } from "./data/puzzles";
@@ -227,25 +229,29 @@ export default function App() {
                 />
               </div>
 
-              {/* Controls — Leaderboard is always available; Share only after solve */}
-              <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-                <Button
-                  type="button"
-                  onClick={() => setShowLeaderboardView(true)}
-                  className="min-h-[48px] gap-2 px-5 text-base font-semibold opacity-100 bg-black text-white border-2 border-gray-800 shadow-sm hover:bg-gray-800 hover:shadow-md hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-[box-shadow,background-color,opacity] duration-150"
-                >
-                  <Trophy className="w-5 h-5 shrink-0" />
-                  Leaderboard
-                </Button>
-                {isPuzzleComplete && (
+              {/* Controls — Leaderboard + Share only after solve (hidden while playing) */}
+              {isPuzzleComplete && (
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant="black"
+                    onClick={() => setShowLeaderboardView(true)}
+                    className={cn(
+                      LEADERBOARD_CTA_BUTTON_CLASSNAME,
+                      "min-h-[48px] gap-2 px-5",
+                    )}
+                  >
+                    <Trophy className="h-5 w-5 shrink-0 text-white" />
+                    Leaderboard
+                  </Button>
                   <Button
                     onClick={() => setShowShareDialog(true)}
                     className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
                   >
                     Share Results
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Success Message */}
               {isPuzzleComplete && (

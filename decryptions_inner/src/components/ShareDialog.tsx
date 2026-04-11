@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Button } from './ui/button';
+import { cn } from './ui/utils';
 import { Share2, Check, Copy, Trophy } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
@@ -143,17 +144,29 @@ Can you beat that? Play today's Decryptions puzzle. 📰`;
 
           <div className="flex flex-col gap-3">
             {onLeaderboard && (
-              <Button
+              <button
                 type="button"
-                className="w-full min-h-[52px] gap-2 text-base font-semibold opacity-100 bg-black text-white border-2 border-gray-800 shadow-sm hover:bg-gray-800 hover:shadow-md hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-[box-shadow,background-color,opacity] duration-150"
+                className={cn(
+                  'inline-flex w-full min-h-[52px] items-center justify-center gap-2 rounded-md px-4 py-2',
+                  'text-base font-bold text-white shadow-lg transition-[filter,box-shadow]',
+                  'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-background',
+                  'hover:brightness-110 hover:shadow-xl',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2',
+                  '[&_svg]:pointer-events-auto [&_svg]:shrink-0',
+                )}
+                style={{
+                  background:
+                    'linear-gradient(to right, rgb(245 158 11), rgb(249 115 22), rgb(225 29 72))',
+                  color: '#ffffff',
+                }}
                 onClick={() => {
                   onOpenChange(false);
                   onLeaderboard();
                 }}
               >
-                <Trophy className="w-6 h-6 shrink-0" />
+                <Trophy className="h-6 w-6 shrink-0" aria-hidden />
                 View leaderboard and results
-              </Button>
+              </button>
             )}
             <div className="flex flex-col sm:flex-row gap-2">
               <Button onClick={handleShare} className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
