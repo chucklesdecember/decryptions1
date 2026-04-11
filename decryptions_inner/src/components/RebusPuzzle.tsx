@@ -89,31 +89,32 @@ export function RebusPuzzle({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-3xl">
+    <div className="grid w-full max-w-3xl grid-cols-1 gap-3 md:grid-cols-2">
       {words.map((word, index) => (
-        <PuzzleBox
-          key={index}
-          ref={(el) => {
-            inputRefs.current[index] = el;
-          }}
-          clues={word.clues}
-          answer={word.answer}
-          userInput={userInputs[index]}
-          onInputChange={(value) => handleInputChange(index, value)}
-          isCorrect={correctAnswers[index]}
-          isPaused={isPaused}
-          hint={hints[index]}
-          onRevealHint={() => {
-            if (interactionLocked) return;
-            if (!revealedHints[index]) {
-              const updated = [...revealedHints];
-              updated[index] = true;
-              setRevealedHints(updated);
-              onUseHint();
-            }
-          }}
-          locked={interactionLocked}
-        />
+        <div key={index} className="relative min-w-0 w-full">
+          <PuzzleBox
+            ref={(el) => {
+              inputRefs.current[index] = el;
+            }}
+            clues={word.clues}
+            answer={word.answer}
+            userInput={userInputs[index]}
+            onInputChange={(value) => handleInputChange(index, value)}
+            isCorrect={correctAnswers[index]}
+            isPaused={isPaused}
+            hint={hints[index]}
+            onRevealHint={() => {
+              if (interactionLocked) return;
+              if (!revealedHints[index]) {
+                const updated = [...revealedHints];
+                updated[index] = true;
+                setRevealedHints(updated);
+                onUseHint();
+              }
+            }}
+            locked={interactionLocked}
+          />
+        </div>
       ))}
     </div>
   );
