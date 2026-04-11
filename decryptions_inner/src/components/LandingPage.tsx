@@ -58,8 +58,17 @@ export function LandingPage({ onStartGame }: LandingPageProps) {
 
         {/* Date + Author */}
         <div className="text-sm text-gray-700">
-          <p className="font-bold">October 15, 2025</p>
+          <p className="font-bold">April 11, 2026</p>
           <p>By Charlie November</p>
+          <p>
+            Contact:{" "}
+            <a
+              href="mailto:charlie.november@duke.edu"
+              className="text-black underline decoration-black/40 underline-offset-2 hover:decoration-black"
+            >
+              charlie.november@duke.edu
+            </a>
+          </p>
         </div>
       </div>
     </div>
