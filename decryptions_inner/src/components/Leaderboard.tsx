@@ -133,14 +133,9 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
             <button
               type="submit"
               disabled={isSubmitting}
-              className={
-                "inline-flex h-12 min-w-[140px] shrink-0 items-center justify-center gap-2 rounded-md border-2 border-black bg-black px-6 text-base font-semibold text-white shadow-md " +
-                "transition-colors hover:bg-neutral-900 hover:text-white " +
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 " +
-                "disabled:pointer-events-none disabled:opacity-50"
-              }
+              className="h-12 min-w-[140px] shrink-0 rounded-md border-2 border-black bg-black px-6 text-base font-semibold text-white shadow-md transition-colors hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Submitting..." : "Submit score"}
+              Submit score
             </button>
           </div>
         </form>
