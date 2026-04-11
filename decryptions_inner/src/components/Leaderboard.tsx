@@ -135,17 +135,18 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
               type="submit"
               disabled={isSubmitting}
               style={{
-                backgroundColor: "red",
+                backgroundColor: "black",
                 color: "white",
-                border: "3px solid black",
+                border: "2px solid black",
                 padding: "12px 20px",
                 fontSize: "16px",
-                fontWeight: "bold",
+                fontWeight: "600",
                 borderRadius: "8px",
-                cursor: "pointer",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                opacity: isSubmitting ? 0.6 : 1,
               }}
             >
-              {isSubmitting ? "Submitting..." : "SUBMIT SCORE"}
+              {isSubmitting ? "Submitting..." : "Submit score"}
             </button>
           </div>
         </form>
