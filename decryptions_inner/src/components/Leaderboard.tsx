@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Lightbulb } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -131,19 +130,18 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
               className="h-12 border-2 border-gray-300 bg-white text-base text-black placeholder:text-gray-500 focus-visible:border-gray-900 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 sm:flex-1"
               autoComplete="username"
             />
-            <Button
+            <button
               type="submit"
-              size="lg"
               disabled={isSubmitting}
               className={
-                "h-12 min-w-[140px] shrink-0 border-2 border-black bg-black px-6 text-base font-semibold text-white shadow-md " +
+                "inline-flex h-12 min-w-[140px] shrink-0 items-center justify-center gap-2 rounded-md border-2 border-black bg-black px-6 text-base font-semibold text-white shadow-md " +
                 "transition-colors hover:bg-neutral-900 hover:text-white " +
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 " +
-                "disabled:opacity-50"
+                "disabled:pointer-events-none disabled:opacity-50"
               }
             >
               {isSubmitting ? "Submitting..." : "Submit score"}
-            </Button>
+            </button>
           </div>
         </form>
       )}
