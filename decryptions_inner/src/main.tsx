@@ -6,7 +6,7 @@ import "./index.css";
 createRoot(document.getElementById("root")!).render(
   <>
     <App />
-    <Analytics />
+    <Analytics mode={import.meta.env.PROD ? "production" : "development"} />
   </>,
 );
   
