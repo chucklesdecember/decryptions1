@@ -41,9 +41,8 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
   ) => {
     return (
       <div className="flex min-w-0 w-full flex-col gap-2">
-        {/* Anchor: positioned card; hint is absolute inside this box only (not the page). */}
-        <div className="relative isolate z-0 min-w-0 overflow-visible rounded-xl border-2 border-border bg-white p-3 pl-12 min-h-[110px] shadow-sm transition-shadow hover:shadow-md">
-          <div className="absolute left-2 top-2 z-10">
+        <div className="flex min-h-[110px] min-w-0 flex-col rounded-xl border-2 border-border bg-white p-3 shadow-sm transition-shadow hover:shadow-md">
+          <div className="mb-2 flex shrink-0 items-center justify-start">
             <Dialog>
               <DialogTrigger asChild>
                 <Button
@@ -69,7 +68,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
             </Dialog>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-1 flex-wrap items-center justify-center gap-2">
             {clues.map((clue, index) => (
               <div key={index} className="flex items-center gap-1.5">
                 {clue.type === 'image' && (

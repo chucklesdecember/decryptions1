@@ -91,7 +91,7 @@ export function RebusPuzzle({
   return (
     <div className="grid w-full max-w-3xl grid-cols-1 gap-3 md:grid-cols-2">
       {words.map((word, index) => (
-        <div key={index} className="relative min-w-0 w-full">
+        <div key={index} className="min-w-0 w-full">
           <PuzzleBox
             ref={(el) => {
               inputRefs.current[index] = el;
