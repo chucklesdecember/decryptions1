@@ -133,10 +133,14 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
             />
             <Button
               type="submit"
-              variant="black"
               size="lg"
               disabled={isSubmitting}
-              className="h-12 min-w-[140px] shrink-0 border-2 border-neutral-950 bg-neutral-900 px-6 text-base font-semibold text-white shadow-md hover:bg-neutral-800 disabled:opacity-50 dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800"
+              className={
+                "h-12 min-w-[140px] shrink-0 border-2 border-black bg-black px-6 text-base font-semibold text-white shadow-md " +
+                "transition-colors hover:bg-neutral-900 hover:text-white " +
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 " +
+                "disabled:opacity-50"
+              }
             >
               {isSubmitting ? "Submitting..." : "Submit score"}
             </Button>
