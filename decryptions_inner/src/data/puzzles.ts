@@ -65,7 +65,7 @@ export const puzzles: Puzzle[] = [
     hints: [
       "(A chewy candy - first four letters) + (team devotee - sixth letter in alphabet) + 2001 Spielberg film backwards",
       "Dad's refuge + spiders can't blink theirs",
-      "(Flexible muscle - pen company) + (sunflower's stalk - 2n) + (metal in bronze, often - it comes in small bags)",
+      "(Flexible muscle - pen company) + (sunflower's stalk - m) + (metal in bronze, often - it comes in small bags)",
       "Bolos and ascots",
     ],
   },
