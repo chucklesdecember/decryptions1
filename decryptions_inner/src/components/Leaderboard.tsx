@@ -87,6 +87,7 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
     });
 
     if (insertError) {
+      console.error("SUPABASE INSERT ERROR:", insertError);
       setError("Could not submit your score.");
       setIsSubmitting(false);
       return;
@@ -133,9 +134,18 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-12 min-w-[140px] shrink-0 rounded-md border-2 border-black bg-black px-6 text-base font-semibold text-white shadow-md transition-colors hover:bg-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                backgroundColor: "red",
+                color: "white",
+                border: "3px solid black",
+                padding: "12px 20px",
+                fontSize: "16px",
+                fontWeight: "bold",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
             >
-              Submit score
+              {isSubmitting ? "Submitting..." : "SUBMIT SCORE"}
             </button>
           </div>
         </form>
