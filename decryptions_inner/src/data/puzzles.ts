@@ -46,7 +46,7 @@ export const puzzles: Puzzle[] = [
       {
         answer: "EPSTEIN",
         clues: [
-          { type: "operator", content: "(" },
+          { type: "operator", content: "---(" },
           { type: "image", content: "/bicep.png", alt: "Bicep" },
           { type: "operator", content: "-" },
           { type: "image", content: "/bic.png", alt: "bic" },

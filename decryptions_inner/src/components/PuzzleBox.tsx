@@ -41,9 +41,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
   ) => {
     return (
       <div className="flex flex-col gap-2">
-        {/* Clue Display - Card Style with per-box hint */}
         <div className="relative bg-white border-2 border-border rounded-xl p-3 pr-12 min-h-[110px] shadow-sm hover:shadow-md transition-shadow">
-          {/* Per-box hint button top-right */}
           <div className="absolute top-2 right-2 z-20">
             <Dialog>
               <DialogTrigger asChild>
@@ -54,6 +52,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   onClick={onRevealHint}
                   disabled={locked}
                   type="button"
+                  aria-label="Show hint"
                 >
                   <Lightbulb className="w-4 h-4" />
                 </Button>
@@ -63,9 +62,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   <DialogTitle>Hint</DialogTitle>
                 </DialogHeader>
                 <div className="p-3 bg-accent rounded-lg">
-                  <p className="text-sm">
-                    {hint}
-                  </p>
+                  <p className="text-sm">{hint}</p>
                 </div>
               </DialogContent>
             </Dialog>
@@ -89,7 +86,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   </span>
                 )}
                 {clue.type === 'operator' && (
-                  <span className="text-foreground mx-0.5">
+                  <span className="text-foreground mx-0.5 whitespace-pre">
                     {clue.content}
                   </span>
                 )}
