@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { supabase } from "../lib/supabase";
 import { getStoredUsername } from "../lib/decryptionsStorage";
+import posthog from "posthog-js";
 
 interface LeaderboardProps {
   puzzleId: string;
@@ -86,6 +87,7 @@ export function Leaderboard({ puzzleId, solveTime, isSolved }: LeaderboardProps)
       return;
     }
 
+    posthog.capture("leaderboard_submitted");
     setHasSubmitted(true);
     setIsSubmitting(false);
     await loadLeaderboard();

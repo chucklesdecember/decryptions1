@@ -10,6 +10,7 @@ import { cn } from './ui/utils';
 import { Share2, Check, Copy, Trophy } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
+import posthog from 'posthog-js';
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ Today's headline is hidden behind a rebus puzzle — come decode the news!
 
 Can you beat that? Play today's Decryptions puzzle. 📰`;
 
-  const handleCopy = () => {
+  const performCopy = () => {
     if (!textareaRef.current) return;
 
     if (navigator.clipboard && window.isSecureContext) {
@@ -86,7 +87,13 @@ Can you beat that? Play today's Decryptions puzzle. 📰`;
     toast.error('Please manually select and copy the text above.');
   };
 
+  const handleCopy = () => {
+    posthog.capture('copy_clicked');
+    performCopy();
+  };
+
   const handleShare = () => {
+    posthog.capture('share_clicked');
     if (navigator.share && navigator.canShare && navigator.canShare({ text: shareText })) {
       navigator.share({
         title: 'Decryptions Puzzle',
@@ -97,12 +104,12 @@ Can you beat that? Play today's Decryptions puzzle. 📰`;
         // User cancelled the share, or share failed
         if (err instanceof Error && err.name !== 'AbortError') {
           console.log('Error sharing:', err);
-          handleCopy();
+          performCopy();
         }
       });
     } else {
       // Fallback to copy if share is not available
-      handleCopy();
+      performCopy();
     }
   };
 

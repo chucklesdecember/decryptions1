@@ -20,6 +20,7 @@ import {
   getStoredSolveHints,
   markPuzzleSolvedLocally,
 } from "./lib/decryptionsStorage";
+import posthog from "posthog-js";
 
 export default function App() {
   const [showLandingPage, setShowLandingPage] = useState(true);
@@ -50,6 +51,10 @@ export default function App() {
 
   const handlePuzzleComplete = useCallback(() => {
     if (!isPuzzleComplete) {
+      posthog.capture("puzzle_solved", {
+        time_seconds: solveTimeRef.current,
+        hints_used: hintsUsedRef.current,
+      });
       setIsPuzzleComplete(true);
       setShowShareDialog(true);
       markPuzzleSolvedLocally(
@@ -72,6 +77,7 @@ export default function App() {
   };
 
   const beginGameSession = useCallback(() => {
+    posthog.capture("puzzle_started");
     setShowLandingPage(false);
     setShowUsernamePrompt(false);
     setIsPaused(false);
@@ -94,6 +100,7 @@ export default function App() {
   }, []);
 
   const handlePlayClick = () => {
+    posthog.capture("play_clicked");
     if (getStoredUsername()) {
       beginGameSession();
     } else {
@@ -235,7 +242,10 @@ export default function App() {
                   <Button
                     type="button"
                     variant="black"
-                    onClick={() => setShowLeaderboardView(true)}
+                    onClick={() => {
+                      posthog.capture("leaderboard_opened");
+                      setShowLeaderboardView(true);
+                    }}
                     className={cn(
                       LEADERBOARD_CTA_BUTTON_CLASSNAME,
                       "min-h-[48px] gap-2 px-5",
@@ -308,6 +318,7 @@ export default function App() {
         hintsUsed={hintsUsed}
         onLeaderboard={() => {
           setShowShareDialog(false);
+          posthog.capture("leaderboard_opened");
           setShowLeaderboardView(true);
         }}
       />
