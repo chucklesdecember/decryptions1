@@ -2,26 +2,29 @@ import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { Lightbulb } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { getStoredUsername } from "../lib/decryptionsStorage";
+import {
+  fetchLeaderboardEntries,
+  submitLeaderboardScore,
+  type SolveEntry,
+} from "../lib/leaderboardApi";
+import {
+  getStoredUsername,
+  hasLeaderboardSubmittedLocally,
+  markLeaderboardSubmittedLocally,
+  setStoredLeaderboardRowId,
+} from "../lib/decryptionsStorage";
 import posthog from "posthog-js";
 
 interface LeaderboardProps {
   puzzleId: string;
   solveTime: number;
   isSolved: boolean;
-  /** Hint count for this session (stored with leaderboard submission). */
   hintsUsed: number;
+  /** Called after a successful manual submit from this view (row id for preview sync). */
+  onSubmitted?: (rowId: string) => void;
 }
 
-interface SolveEntry {
-  id: string;
-  display_name: string;
-  time_seconds: number;
-  created_at: string;
-  hints_used: number | null;
-}
-
-export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: LeaderboardProps) {
+export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed, onSubmitted }: LeaderboardProps) {
   const [entries, setEntries] = useState<SolveEntry[]>([]);
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -42,24 +45,13 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
     }
 
     setIsLoading(true);
-    const { data, error: selectError } = await supabase
-      .from("solves")
-      .select("id, display_name, time_seconds, created_at, hints_used")
-      .eq("puzzle_id", puzzleId)
-      .order("time_seconds", { ascending: true })
-      .order("created_at", { ascending: true })
-      .limit(25);
-
-    if (selectError) {
-      setError("Could not load leaderboard.");
-    } else {
-      setEntries(data ?? []);
-    }
+    const rows = await fetchLeaderboardEntries(puzzleId);
+    setEntries(rows);
     setIsLoading(false);
   };
 
   useEffect(() => {
-    setHasSubmitted(false);
+    setHasSubmitted(hasLeaderboardSubmittedLocally(puzzleId));
     setDisplayName(getStoredUsername() ?? "");
     setError(null);
     void loadLeaderboard();
@@ -78,24 +70,25 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed }: Leader
     setError(null);
     setIsSubmitting(true);
 
-    const hintCount = Math.max(0, Math.min(99, Math.floor(hintsUsed)));
-    const { error: insertError } = await supabase.from("solves").insert({
-      puzzle_id: puzzleId,
-      display_name: trimmed,
-      time_seconds: solveTime,
-      hints_used: hintCount,
+    const res = await submitLeaderboardScore({
+      puzzleId,
+      displayName: trimmed,
+      timeSeconds: solveTime,
+      hintsUsed,
     });
 
-    if (insertError) {
-      console.error("SUPABASE INSERT ERROR:", insertError);
+    if (!res.ok) {
       setError("Could not submit your score.");
       setIsSubmitting(false);
       return;
     }
 
     posthog.capture("leaderboard_submitted");
+    markLeaderboardSubmittedLocally(puzzleId);
+    setStoredLeaderboardRowId(puzzleId, res.id);
     setHasSubmitted(true);
     setIsSubmitting(false);
+    onSubmitted?.(res.id);
     await loadLeaderboard();
   };
 

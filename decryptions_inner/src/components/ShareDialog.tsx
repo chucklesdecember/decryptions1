@@ -38,7 +38,9 @@ Today's headline is hidden behind a rebus puzzle — come decode the news!
 ⏱️ My time: ${formatTime(solveTime)}
 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''} used
 
-Can you beat that? Play today's Decryptions puzzle. 📰`;
+Can you beat that? Play today's Decryptions puzzle. 📰
+
+https://decryptions1.vercel.app/`;
 
   const performCopy = () => {
     if (!textareaRef.current) return;

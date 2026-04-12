@@ -5,6 +5,7 @@ import { InstructionsDialog } from "./components/InstructionsDialog";
 import { ShareDialog } from "./components/ShareDialog";
 import { LandingPage } from "./components/LandingPage";
 import { Leaderboard } from "./components/Leaderboard";
+import { LeaderboardPlacementPreview } from "./components/LeaderboardPlacementPreview";
 import { UsernamePromptDialog } from "./components/UsernamePromptDialog";
 import { Button } from "./components/ui/button";
 import { cn } from "./components/ui/utils";
@@ -19,7 +20,18 @@ import {
   getStoredSolveSeconds,
   getStoredSolveHints,
   markPuzzleSolvedLocally,
+  hasLeaderboardSubmittedLocally,
+  markLeaderboardSubmittedLocally,
+  getStoredLeaderboardRowId,
+  setStoredLeaderboardRowId,
 } from "./lib/decryptionsStorage";
+import {
+  fetchLeaderboardEntries,
+  submitLeaderboardScore,
+  sliceAroundPlayer,
+  type SolveEntry,
+} from "./lib/leaderboardApi";
+import { supabase } from "./lib/supabase";
 import posthog from "posthog-js";
 
 export default function App() {
@@ -35,6 +47,16 @@ export default function App() {
   const [alreadySolvedOnDevice, setAlreadySolvedOnDevice] = useState(false);
   /** After first-time username save: wait until instructions close, then call `beginGameSession`. */
   const pendingFirstStartAfterInstructionsRef = useRef(false);
+  const leaderboardSubmitLockRef = useRef(false);
+  /** Prevents duplicate onComplete / double leaderboard submit in React Strict Mode. */
+  const puzzleCompleteOnceRef = useRef(false);
+
+  const [placementPreview, setPlacementPreview] = useState<{
+    rank: number;
+    slice: SolveEntry[];
+    highlightIndex: number;
+  } | null>(null);
+  const [showPostSolveUsernamePrompt, setShowPostSolveUsernamePrompt] = useState(false);
 
   const solveTimeRef = useRef(0);
   const hintsUsedRef = useRef(0);
@@ -51,8 +73,98 @@ export default function App() {
     !isInstructionsOpen &&
     !isPuzzleComplete;
 
+  const runPlacementPreview = useCallback(async (rowId: string) => {
+    const entries = await fetchLeaderboardEntries(currentPuzzle.id);
+    const sliced = sliceAroundPlayer(entries, rowId);
+    if (sliced) {
+      setPlacementPreview(sliced);
+      posthog.capture("leaderboard_preview_shown", {
+        puzzle_id: currentPuzzle.id,
+        rank: sliced.rank,
+      });
+    }
+  }, [currentPuzzle.id]);
+
+  const submitLeaderboardAfterSolve = useCallback(async () => {
+    if (!supabase) return;
+    const puzzleId = currentPuzzle.id;
+    if (hasLeaderboardSubmittedLocally(puzzleId)) {
+      const rid = getStoredLeaderboardRowId(puzzleId);
+      if (rid) await runPlacementPreview(rid);
+      return;
+    }
+    if (leaderboardSubmitLockRef.current) return;
+    const name = getStoredUsername()?.trim();
+    if (!name) {
+      setShowPostSolveUsernamePrompt(true);
+      return;
+    }
+    leaderboardSubmitLockRef.current = true;
+    const res = await submitLeaderboardScore({
+      puzzleId,
+      displayName: name,
+      timeSeconds: solveTimeRef.current,
+      hintsUsed: hintsUsedRef.current,
+    });
+    if (res.ok) {
+      markLeaderboardSubmittedLocally(puzzleId);
+      setStoredLeaderboardRowId(puzzleId, res.id);
+      posthog.capture("leaderboard_auto_submitted", { puzzle_id: puzzleId });
+      await runPlacementPreview(res.id);
+    }
+    leaderboardSubmitLockRef.current = false;
+  }, [currentPuzzle.id, runPlacementPreview]);
+
+  const handlePostSolveUsernameSave = useCallback(
+    (username: string) => {
+      setStoredUsername(username);
+      setShowPostSolveUsernamePrompt(false);
+      void (async () => {
+        if (!supabase) return;
+        const puzzleId = currentPuzzle.id;
+        if (hasLeaderboardSubmittedLocally(puzzleId)) return;
+        if (leaderboardSubmitLockRef.current) return;
+        leaderboardSubmitLockRef.current = true;
+        const res = await submitLeaderboardScore({
+          puzzleId,
+          displayName: username.trim(),
+          timeSeconds: solveTimeRef.current,
+          hintsUsed: hintsUsedRef.current,
+        });
+        if (res.ok) {
+          markLeaderboardSubmittedLocally(puzzleId);
+          setStoredLeaderboardRowId(puzzleId, res.id);
+          posthog.capture("leaderboard_auto_submitted", {
+            puzzle_id: puzzleId,
+            source: "post_solve_username",
+          });
+          await runPlacementPreview(res.id);
+        }
+        leaderboardSubmitLockRef.current = false;
+      })();
+    },
+    [currentPuzzle.id, runPlacementPreview],
+  );
+
+  useEffect(() => {
+    if (showLandingPage || !isPuzzleComplete || !alreadySolvedOnDevice) return;
+    const pid = currentPuzzle.id;
+    if (!hasLeaderboardSubmittedLocally(pid)) return;
+    const rid = getStoredLeaderboardRowId(pid);
+    if (!rid) return;
+    void runPlacementPreview(rid);
+  }, [
+    showLandingPage,
+    isPuzzleComplete,
+    alreadySolvedOnDevice,
+    currentPuzzle.id,
+    runPlacementPreview,
+  ]);
+
   const handlePuzzleComplete = useCallback(() => {
+    if (puzzleCompleteOnceRef.current) return;
     if (!isPuzzleComplete) {
+      puzzleCompleteOnceRef.current = true;
       posthog.capture("puzzle_solved", {
         time_seconds: solveTimeRef.current,
         hints_used: hintsUsedRef.current,
@@ -64,8 +176,9 @@ export default function App() {
         solveTimeRef.current,
         hintsUsedRef.current,
       );
+      void submitLeaderboardAfterSolve();
     }
-  }, [isPuzzleComplete]);
+  }, [isPuzzleComplete, submitLeaderboardAfterSolve]);
 
   const handleUseHint = () => {
     setHintsUsed((prev) =>
@@ -86,9 +199,13 @@ export default function App() {
     setIsInstructionsOpen(false);
     setShowShareDialog(false);
     setShowLeaderboardView(false);
+    setPlacementPreview(null);
+    setShowPostSolveUsernamePrompt(false);
+    puzzleCompleteOnceRef.current = false;
 
     const id = currentPuzzle.id;
     if (isPuzzleSolvedLocally(id)) {
+      puzzleCompleteOnceRef.current = true;
       setIsPuzzleComplete(true);
       setSolveTime(getStoredSolveSeconds(id) ?? 0);
       setHintsUsed(getStoredSolveHints(id) ?? 0);
@@ -226,6 +343,9 @@ export default function App() {
                 solveTime={solveTime}
                 isSolved={isPuzzleComplete}
                 hintsUsed={hintsUsed}
+                onSubmitted={(rowId) => {
+                  void runPlacementPreview(rowId);
+                }}
               />
             </>
           ) : (
@@ -249,6 +369,14 @@ export default function App() {
                   interactionLocked={alreadySolvedOnDevice}
                 />
               </div>
+
+              {isPuzzleComplete && placementPreview && !showLeaderboardView && (
+                <LeaderboardPlacementPreview
+                  rank={placementPreview.rank}
+                  slice={placementPreview.slice}
+                  highlightIndex={placementPreview.highlightIndex}
+                />
+              )}
 
               {/* Controls — Leaderboard + Share only after solve (hidden while playing) */}
               {isPuzzleComplete && (
@@ -335,6 +463,11 @@ export default function App() {
           posthog.capture("leaderboard_opened");
           setShowLeaderboardView(true);
         }}
+      />
+
+      <UsernamePromptDialog
+        open={showPostSolveUsernamePrompt}
+        onSave={handlePostSolveUsernameSave}
       />
 
       <Toaster richColors position="top-center" />

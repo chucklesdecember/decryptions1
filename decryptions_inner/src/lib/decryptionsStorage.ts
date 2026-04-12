@@ -75,3 +75,45 @@ export function markPuzzleSolvedLocally(
     // ignore
   }
 }
+
+/** Prevents duplicate leaderboard inserts for the same puzzle on this device. */
+export function leaderboardSubmittedKey(puzzleId: string): string {
+  return `decryptions_lb_submitted_${puzzleId}`;
+}
+
+export function hasLeaderboardSubmittedLocally(puzzleId: string): boolean {
+  try {
+    return localStorage.getItem(leaderboardSubmittedKey(puzzleId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function markLeaderboardSubmittedLocally(puzzleId: string): void {
+  try {
+    localStorage.setItem(leaderboardSubmittedKey(puzzleId), "1");
+  } catch {
+    // ignore
+  }
+}
+
+export function leaderboardRowIdKey(puzzleId: string): string {
+  return `decryptions_lb_row_id_${puzzleId}`;
+}
+
+export function getStoredLeaderboardRowId(puzzleId: string): string | null {
+  try {
+    const v = localStorage.getItem(leaderboardRowIdKey(puzzleId));
+    return v && v.length > 0 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredLeaderboardRowId(puzzleId: string, rowId: string): void {
+  try {
+    localStorage.setItem(leaderboardRowIdKey(puzzleId), rowId);
+  } catch {
+    // ignore
+  }
+}
