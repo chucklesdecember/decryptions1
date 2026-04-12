@@ -6,13 +6,6 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Input } from './ui/input';
 import { cn } from './ui/utils';
 
-/** Uniform image token — all clue art scales down inside this box; overflow clips. */
-const IMAGE_TOKEN_FRAME =
-  'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted sm:h-11 sm:w-11';
-
-const IMAGE_TOKEN_IMG =
-  'h-full w-full min-h-0 min-w-0 max-h-full max-w-full object-contain object-center';
-
 /** Text clues (ink, cl, …) — height matches image tokens for alignment. */
 const TEXT_TOKEN =
   'inline-flex min-h-10 shrink-0 items-center justify-center rounded-md border border-border bg-white px-2 py-1 text-xs font-semibold tabular-nums text-foreground shadow-sm sm:min-h-11 sm:px-2.5 sm:text-sm';
@@ -91,15 +84,24 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                 key={index}
                 className="flex min-w-0 shrink-0 items-center justify-center"
               >
-                {clue.type === 'image' && (
-                  <div className={IMAGE_TOKEN_FRAME}>
-                    <ImageWithFallback
-                      src={clue.content}
-                      alt={clue.alt || 'puzzle clue'}
-                      className={IMAGE_TOKEN_IMG}
-                    />
-                  </div>
-                )}
+                {clue.type === 'image' && (() => {
+                  const isBlink = clue.content === '/blink.png';
+                  return (
+                    <div
+                      className={
+                        isBlink
+                          ? 'flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted'
+                          : 'flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted'
+                      }
+                    >
+                      <ImageWithFallback
+                        src={clue.content}
+                        alt={clue.alt || 'puzzle clue'}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  );
+                })()}
                 {clue.type === 'text' && (
                   <span className={TEXT_TOKEN}>{clue.content}</span>
                 )}
