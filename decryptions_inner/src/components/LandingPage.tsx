@@ -58,7 +58,7 @@ export function LandingPage({ onStartGame }: LandingPageProps) {
 
         {/* Date + Author */}
         <div className="text-sm text-gray-700">
-          <p className="font-bold">April 11, 2026</p>
+          <p className="font-bold">April 13, 2026</p>
           <p>By Charlie November</p>
           <p>
             Contact:{" "}

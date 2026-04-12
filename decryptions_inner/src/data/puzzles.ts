@@ -20,6 +20,63 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-04-13-trump-hormuz",
+    headline: "Trump to Block Hormuz",
+    date: "April 13, 2026",
+    category: "World News",
+    words: [
+      {
+        answer: "TRUMP",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/trumpet.png", alt: "Trumpet" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/et.png", alt: "E.T." },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "TO",
+        clues: [{ type: "image", content: "/ii.png", alt: "Roman numeral II" }],
+      },
+      {
+        answer: "BLOCK",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/blink.png", alt: "Blink" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/ink.png", alt: "Ink" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/clock.png", alt: "Clock" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "cl" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "HORMUZ",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/hornet.png", alt: "Hornet" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/net.png", alt: "Net" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/mug.png", alt: "Mug" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/g.png", alt: "g" },
+          { type: "operator", content: ") + " },
+          { type: "image", content: "/z.png", alt: "z" },
+        ],
+      },
+    ],
+    hints: [
+      "Brass instrument in an orchestra - Extra-terrestrial, for short",
+      "The number after one (Roman numerals)",
+      "(A quick eye movement - What comes out of a pen) + (Tells time - First two letters of 'class')",
+      "(A stinging insect - A mesh trap) + (A coffee cup - its last letter) + z",
+    ],
+  },
+  {
     id: "2026-04-11",
     headline: "Melania Denies Epstein Ties",
     date: "April 11, 2026",
