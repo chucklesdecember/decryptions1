@@ -4,15 +4,15 @@ import { Timer } from "./components/Timer";
 import { InstructionsDialog } from "./components/InstructionsDialog";
 import { ShareDialog } from "./components/ShareDialog";
 import { LandingPage } from "./components/LandingPage";
+import { ArchiveDetail, ArchiveList } from "./components/ArchiveView";
 import { Leaderboard } from "./components/Leaderboard";
 import { LeaderboardPlacementPreview } from "./components/LeaderboardPlacementPreview";
 import { UsernamePromptDialog } from "./components/UsernamePromptDialog";
 import { Button } from "./components/ui/button";
-import { cn } from "./components/ui/utils";
-import { LEADERBOARD_CTA_BUTTON_CLASSNAME } from "./lib/leaderboardCtaButton";
-import { Pause, Play, Trophy } from "lucide-react";
+import { Archive, Pause, Play, Trophy } from "lucide-react";
 import { Toaster } from "./components/ui/sonner";
-import { currentPuzzle } from "./data/puzzles";
+import { toast } from "sonner";
+import { currentPuzzle, type Puzzle } from "./data/puzzles";
 import {
   getStoredUsername,
   setStoredUsername,
@@ -27,6 +27,7 @@ import {
 } from "./lib/decryptionsStorage";
 import {
   fetchLeaderboardEntries,
+  isDisplayNameTakenByAnother,
   submitLeaderboardScore,
   sliceAroundPlayer,
   type SolveEntry,
@@ -34,8 +35,12 @@ import {
 import { supabase } from "./lib/supabase";
 import posthog from "posthog-js";
 
+type AppScreen = "landing" | "game" | "archive-list" | "archive-detail";
+
 export default function App() {
-  const [showLandingPage, setShowLandingPage] = useState(true);
+  const [screen, setScreen] = useState<AppScreen>("landing");
+  const [archiveBackTarget, setArchiveBackTarget] = useState<"landing" | "game">("landing");
+  const [archiveSelectedPuzzle, setArchiveSelectedPuzzle] = useState<Puzzle | null>(null);
   const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
@@ -68,10 +73,31 @@ export default function App() {
   }, [hintsUsed]);
 
   const isTimerActive =
-    !showLandingPage &&
+    screen === "game" &&
     !isPaused &&
     !isInstructionsOpen &&
     !isPuzzleComplete;
+
+  const openArchive = useCallback((from: "landing" | "game") => {
+    setArchiveBackTarget(from);
+    setScreen("archive-list");
+    posthog.capture("archive_opened", { from });
+  }, []);
+
+  const handleSelectArchivePuzzle = useCallback((puzzle: Puzzle) => {
+    setArchiveSelectedPuzzle(puzzle);
+    setScreen("archive-detail");
+    posthog.capture("archive_puzzle_opened", { puzzle_id: puzzle.id });
+  }, []);
+
+  const handleArchiveListBack = useCallback(() => {
+    setScreen(archiveBackTarget);
+  }, [archiveBackTarget]);
+
+  const validateUsername = useCallback(async (username: string): Promise<string | null> => {
+    const taken = await isDisplayNameTakenByAnother(username.trim());
+    return taken ? "That username is already taken. Try another." : null;
+  }, []);
 
   const runPlacementPreview = useCallback(async (rowId: string) => {
     const entries = await fetchLeaderboardEntries(currentPuzzle.id);
@@ -99,6 +125,10 @@ export default function App() {
       setShowPostSolveUsernamePrompt(true);
       return;
     }
+    if (await isDisplayNameTakenByAnother(name)) {
+      setShowPostSolveUsernamePrompt(true);
+      return;
+    }
     leaderboardSubmitLockRef.current = true;
     const res = await submitLeaderboardScore({
       puzzleId,
@@ -111,6 +141,9 @@ export default function App() {
       setStoredLeaderboardRowId(puzzleId, res.id);
       posthog.capture("leaderboard_auto_submitted", { puzzle_id: puzzleId });
       await runPlacementPreview(res.id);
+    } else if (res.error === "duplicate") {
+      setShowPostSolveUsernamePrompt(true);
+      toast.error("That username is already taken. Choose another.");
     }
     leaderboardSubmitLockRef.current = false;
   }, [currentPuzzle.id, runPlacementPreview]);
@@ -139,6 +172,9 @@ export default function App() {
             source: "post_solve_username",
           });
           await runPlacementPreview(res.id);
+        } else if (res.error === "duplicate") {
+          toast.error("That username is already taken. Choose another.");
+          setShowPostSolveUsernamePrompt(true);
         }
         leaderboardSubmitLockRef.current = false;
       })();
@@ -147,14 +183,14 @@ export default function App() {
   );
 
   useEffect(() => {
-    if (showLandingPage || !isPuzzleComplete || !alreadySolvedOnDevice) return;
+    if (screen !== "game" || !isPuzzleComplete || !alreadySolvedOnDevice) return;
     const pid = currentPuzzle.id;
     if (!hasLeaderboardSubmittedLocally(pid)) return;
     const rid = getStoredLeaderboardRowId(pid);
     if (!rid) return;
     void runPlacementPreview(rid);
   }, [
-    showLandingPage,
+    screen,
     isPuzzleComplete,
     alreadySolvedOnDevice,
     currentPuzzle.id,
@@ -193,7 +229,7 @@ export default function App() {
 
   const beginGameSession = useCallback(() => {
     posthog.capture("puzzle_started");
-    setShowLandingPage(false);
+    setScreen("game");
     setShowUsernamePrompt(false);
     setIsPaused(false);
     setIsInstructionsOpen(false);
@@ -242,17 +278,36 @@ export default function App() {
     }
   };
 
-  if (showLandingPage) {
+  if (screen === "landing") {
     return (
       <>
-        <LandingPage onStartGame={handlePlayClick} />
-        <UsernamePromptDialog open={showUsernamePrompt} onSave={handleUsernameSave} />
+        <LandingPage onStartGame={handlePlayClick} onOpenArchive={() => openArchive("landing")} />
+        <UsernamePromptDialog
+          open={showUsernamePrompt}
+          onSave={handleUsernameSave}
+          validateUsername={validateUsername}
+        />
         <InstructionsDialog
           open={isInstructionsOpen}
           onOpenChange={handleInstructionsOpenChange}
           showPlayButton
         />
       </>
+    );
+  }
+
+  if (screen === "archive-list") {
+    return (
+      <ArchiveList onBack={handleArchiveListBack} onSelectPuzzle={handleSelectArchivePuzzle} />
+    );
+  }
+
+  if (screen === "archive-detail" && archiveSelectedPuzzle) {
+    return (
+      <ArchiveDetail
+        puzzle={archiveSelectedPuzzle}
+        onBack={() => setScreen("archive-list")}
+      />
     );
   }
 
@@ -270,7 +325,17 @@ export default function App() {
                 Decode the News, One Puzzle at a Time
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => openArchive("game")}
+                className="gap-1.5 shrink-0"
+              >
+                <Archive className="h-4 w-4" />
+                Archive
+              </Button>
               <Timer
                 isActive={isTimerActive}
                 onTimeUpdate={setSolveTime}
@@ -366,7 +431,7 @@ export default function App() {
                   isPaused={isPaused}
                   hints={currentPuzzle.hints}
                   onUseHint={handleUseHint}
-                  interactionLocked={alreadySolvedOnDevice}
+                  interactionLocked={alreadySolvedOnDevice || isPuzzleComplete}
                 />
               </div>
 
@@ -383,22 +448,18 @@ export default function App() {
                 <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
                   <Button
                     type="button"
-                    variant="black"
                     onClick={() => {
                       posthog.capture("leaderboard_opened");
                       setShowLeaderboardView(true);
                     }}
-                    className={cn(
-                      LEADERBOARD_CTA_BUTTON_CLASSNAME,
-                      "min-h-[48px] gap-2 px-5",
-                    )}
+                    className="min-h-[48px] gap-2 px-5 text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
                   >
                     <Trophy className="h-5 w-5 shrink-0 text-white" />
                     Leaderboard
                   </Button>
                   <Button
                     onClick={() => setShowShareDialog(true)}
-                    className="gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+                    className="min-h-[48px] gap-2 px-5 text-white bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
                   >
                     Share Results
                   </Button>
@@ -458,6 +519,9 @@ export default function App() {
         onOpenChange={setShowShareDialog}
         solveTime={solveTime}
         hintsUsed={hintsUsed}
+        puzzleDate={currentPuzzle.date}
+        puzzleId={currentPuzzle.id}
+        playerRowId={getStoredLeaderboardRowId(currentPuzzle.id)}
         onLeaderboard={() => {
           setShowShareDialog(false);
           posthog.capture("leaderboard_opened");
@@ -468,6 +532,7 @@ export default function App() {
       <UsernamePromptDialog
         open={showPostSolveUsernamePrompt}
         onSave={handlePostSolveUsernameSave}
+        validateUsername={validateUsername}
       />
 
       <Toaster richColors position="top-center" />

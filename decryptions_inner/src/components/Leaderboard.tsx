@@ -4,6 +4,7 @@ import { Lightbulb } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import {
   fetchLeaderboardEntries,
+  isDisplayNameTakenByAnother,
   submitLeaderboardScore,
   type SolveEntry,
 } from "../lib/leaderboardApi";
@@ -67,6 +68,11 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed, onSubmit
       return;
     }
 
+    if (await isDisplayNameTakenByAnother(trimmed)) {
+      setError("That username is already taken. Try another.");
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
 
@@ -78,7 +84,11 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed, onSubmit
     });
 
     if (!res.ok) {
-      setError("Could not submit your score.");
+      setError(
+        res.error === "duplicate"
+          ? "That username is already taken. Try another."
+          : "Could not submit your score.",
+      );
       setIsSubmitting(false);
       return;
     }

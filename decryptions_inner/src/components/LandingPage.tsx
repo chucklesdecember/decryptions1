@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { Button } from "./ui/button";
+import { getCurrentPuzzle } from "../data/puzzles";
+import { Archive } from "lucide-react";
 
 interface LandingPageProps {
   onStartGame: () => void;
+  onOpenArchive: () => void;
 }
 
-export function LandingPage({ onStartGame }: LandingPageProps) {
+export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
+  const puzzleDate = getCurrentPuzzle().date;
   const [logoLoadFailed, setLogoLoadFailed] = useState(false);
 
   return (
@@ -46,7 +50,7 @@ export function LandingPage({ onStartGame }: LandingPageProps) {
           Decryptions
         </h1>
 
-        {/* Play Button */}
+        {/* Play */}
         <div className="mb-6">
           <Button
             onClick={onStartGame}
@@ -58,7 +62,7 @@ export function LandingPage({ onStartGame }: LandingPageProps) {
 
         {/* Date + Author */}
         <div className="text-sm text-gray-700">
-          <p className="font-bold">April 13, 2026</p>
+          <p className="font-bold">{puzzleDate}</p>
           <p>By Charlie November</p>
           <p>
             Contact:{" "}
@@ -69,6 +73,15 @@ export function LandingPage({ onStartGame }: LandingPageProps) {
               charlie.november@duke.edu
             </a>
           </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onOpenArchive}
+            className="mt-5 rounded-full px-8 py-3 text-base gap-2 border-black/20 hover:bg-black/5"
+          >
+            <Archive className="h-4 w-4" />
+            Archive
+          </Button>
         </div>
       </div>
     </div>

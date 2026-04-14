@@ -4,113 +4,155 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog';
-import { Button } from './ui/button';
-import { cn } from './ui/utils';
-import { Share2, Check, Copy, Trophy } from 'lucide-react';
-import { useState, useRef } from 'react';
-import { toast } from 'sonner';
-import posthog from 'posthog-js';
+} from "./ui/dialog";
+import { Button } from "./ui/button";
+import { cn } from "./ui/utils";
+import { Share2, Check, Copy, Trophy } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import posthog from "posthog-js";
+import {
+  fetchLeaderboardEntries,
+  sliceAroundPlayer,
+  type SolveEntry,
+} from "../lib/leaderboardApi";
+import { LeaderboardPlacementPreview } from "./LeaderboardPlacementPreview";
 
 interface ShareDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   solveTime: number;
   hintsUsed: number;
+  /** Daily puzzle date label, e.g. "April 14, 2026" */
+  puzzleDate: string;
+  puzzleId: string;
+  /** Player's row in `solves` after submit (localStorage); used to slice the leaderboard */
+  playerRowId: string | null;
   onLeaderboard?: () => void;
 }
 
-export function ShareDialog({ isOpen, onOpenChange, solveTime, hintsUsed, onLeaderboard }: ShareDialogProps) {
-  const [copied, setCopied] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+function formatTime(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+function formatShortDate(puzzleDate: string): string {
+  const t = Date.parse(puzzleDate);
+  if (!Number.isNaN(t)) {
+    return new Date(t).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  return puzzleDate;
+}
 
-  const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const shareText = `🔐 Decryptions — ${dateStr}
-
-Today's headline is hidden behind a rebus puzzle — come decode the news!
+/** Text-only summary for copy / system share (no leaderboard block). */
+function buildCopyableShareText(dateStr: string, solveTime: number, hintsUsed: number): string {
+  return `🔐 Decryptions — ${dateStr}
 
 ⏱️ My time: ${formatTime(solveTime)}
-💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''} used
-
-Can you beat that? Play today's Decryptions puzzle. 📰
+💡 ${hintsUsed} hint${hintsUsed !== 1 ? "s" : ""} used
 
 https://decryptions1.vercel.app/`;
+}
+
+export function ShareDialog({
+  isOpen,
+  onOpenChange,
+  solveTime,
+  hintsUsed,
+  puzzleDate,
+  puzzleId,
+  playerRowId,
+  onLeaderboard,
+}: ShareDialogProps) {
+  const [copied, setCopied] = useState(false);
+  const [placementLoading, setPlacementLoading] = useState(false);
+  const [placement, setPlacement] = useState<{
+    rank: number;
+    slice: SolveEntry[];
+    highlightIndex: number;
+  } | null>(null);
+
+  const dateStr = formatShortDate(puzzleDate);
+  const copyableText = buildCopyableShareText(dateStr, solveTime, hintsUsed);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+    setPlacement(null);
+
+    if (!playerRowId) {
+      setPlacementLoading(false);
+      return;
+    }
+
+    setPlacementLoading(true);
+    void (async () => {
+      const entries = await fetchLeaderboardEntries(puzzleId);
+      if (cancelled) return;
+      const sliced = sliceAroundPlayer(entries, playerRowId);
+      if (sliced && sliced.slice.length > 0) {
+        setPlacement(sliced);
+      } else {
+        setPlacement(null);
+      }
+      setPlacementLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, puzzleId, playerRowId]);
 
   const performCopy = () => {
-    if (!textareaRef.current) return;
+    const text = copyableText;
 
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard
-        .writeText(shareText)
+        .writeText(text)
         .then(() => {
           setCopied(true);
-          toast.success('Results copied! Paste to share with friends.');
+          toast.success("Copied! Paste to share with friends.");
           setTimeout(() => setCopied(false), 2000);
         })
         .catch(() => {
-          textareaRef.current?.select();
-          try {
-            const successful = document.execCommand('copy');
-            if (successful) {
-              setCopied(true);
-              toast.success('Results copied! Paste to share with friends.');
-              setTimeout(() => setCopied(false), 2000);
-              return;
-            }
-          } catch {
-            // ignore and fallback to manual selection message
-          }
-
-          toast.error('Please manually select and copy the text above.');
-          textareaRef.current?.select();
+          toast.error("Couldn't copy. Try again or use Share.");
         });
       return;
     }
 
-    textareaRef.current.select();
-    try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        setCopied(true);
-        toast.success('Results copied! Paste to share with friends.');
-        setTimeout(() => setCopied(false), 2000);
-        return;
-      }
-    } catch {
-      // ignore and fallback to manual selection message
-    }
-
-    toast.error('Please manually select and copy the text above.');
+    toast.error("Copy isn't available in this browser. Try Share.");
   };
 
   const handleCopy = () => {
-    posthog.capture('copy_clicked');
+    posthog.capture("copy_clicked");
     performCopy();
   };
 
   const handleShare = () => {
-    posthog.capture('share_clicked');
-    if (navigator.share && navigator.canShare && navigator.canShare({ text: shareText })) {
-      navigator.share({
-        title: 'Decryptions Puzzle',
-        text: shareText,
-      }).then(() => {
-        toast.success('Thanks for sharing!');
-      }).catch((err) => {
-        // User cancelled the share, or share failed
-        if (err instanceof Error && err.name !== 'AbortError') {
-          console.log('Error sharing:', err);
-          performCopy();
-        }
-      });
+    posthog.capture("share_clicked");
+    const text = copyableText;
+    if (navigator.share && navigator.canShare && navigator.canShare({ text })) {
+      navigator
+        .share({
+          title: "Decryptions Puzzle",
+          text,
+        })
+        .then(() => {
+          toast.success("Thanks for sharing!");
+        })
+        .catch((err) => {
+          if (err instanceof Error && err.name !== "AbortError") {
+            console.log("Error sharing:", err);
+            performCopy();
+          }
+        });
     } else {
-      // Fallback to copy if share is not available
       performCopy();
     }
   };
@@ -133,40 +175,51 @@ https://decryptions1.vercel.app/`;
               You solved it in <span className="text-primary">{formatTime(solveTime)}</span>
             </p>
             <p className="text-center text-sm text-muted-foreground">
-              Using {hintsUsed} hint{hintsUsed !== 1 ? 's' : ''}
+              Using {hintsUsed} hint{hintsUsed !== 1 ? "s" : ""}
             </p>
           </div>
 
-          <div className="bg-muted p-4 rounded-lg">
-            <textarea
-              ref={textareaRef}
-              value={shareText}
-              readOnly
-              onClick={(e) => e.currentTarget.select()}
-              className="w-full text-sm whitespace-pre-line bg-transparent border-none outline-none resize-none cursor-pointer"
-              rows={7}
+          {placementLoading && (
+            <p className="text-center text-sm text-muted-foreground">Loading leaderboard…</p>
+          )}
+
+          {!placementLoading && placement && (
+            <LeaderboardPlacementPreview
+              rank={placement.rank}
+              slice={placement.slice}
+              highlightIndex={placement.highlightIndex}
+              className="mb-0 w-full max-w-none"
             />
-            <p className="text-xs text-muted-foreground mt-2 text-center">
-              Click text to select • Cmd/Ctrl+C to copy
+          )}
+
+          {!placementLoading && !placement && playerRowId && (
+            <p className="text-center text-sm text-muted-foreground">
+              Leaderboard placement will appear here once your score syncs.
             </p>
-          </div>
+          )}
+
+          {!placementLoading && !placement && !playerRowId && (
+            <p className="text-center text-sm text-muted-foreground">
+              Submit your time on the leaderboard to see how you rank.
+            </p>
+          )}
 
           <div className="flex flex-col gap-3">
             {onLeaderboard && (
               <button
                 type="button"
                 className={cn(
-                  'inline-flex w-full min-h-[52px] items-center justify-center gap-2 rounded-md px-4 py-2',
-                  'text-base font-bold text-white shadow-lg transition-[filter,box-shadow]',
-                  'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-background',
-                  'hover:brightness-110 hover:shadow-xl',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2',
-                  '[&_svg]:pointer-events-auto [&_svg]:shrink-0',
+                  "inline-flex w-full min-h-[52px] items-center justify-center gap-2 rounded-md px-4 py-2",
+                  "text-base font-bold text-white shadow-lg transition-[filter,box-shadow]",
+                  "ring-2 ring-amber-400/90 ring-offset-2 ring-offset-background",
+                  "hover:brightness-110 hover:shadow-xl",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2",
+                  "[&_svg]:pointer-events-auto [&_svg]:shrink-0",
                 )}
                 style={{
                   background:
-                    'linear-gradient(to right, rgb(245 158 11), rgb(249 115 22), rgb(225 29 72))',
-                  color: '#ffffff',
+                    "linear-gradient(to right, rgb(245 158 11), rgb(249 115 22), rgb(225 29 72))",
+                  color: "#ffffff",
                 }}
                 onClick={() => {
                   onOpenChange(false);
@@ -178,7 +231,10 @@ https://decryptions1.vercel.app/`;
               </button>
             )}
             <div className="flex flex-col sm:flex-row gap-2">
-              <Button onClick={handleShare} className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600">
+              <Button
+                onClick={handleShare}
+                className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+              >
                 <Share2 className="w-4 h-4" />
                 Share Result
               </Button>

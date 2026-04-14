@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getStoredUsername } from "./decryptionsStorage";
 
 export interface SolveEntry {
   id: string;
@@ -6,6 +7,22 @@ export interface SolveEntry {
   time_seconds: number;
   created_at: string;
   hints_used: number | null;
+}
+
+/**
+ * True if this display name is already used on the leaderboard by someone else.
+ * The same device may reuse its stored username across puzzles.
+ */
+export async function isDisplayNameTakenByAnother(name: string): Promise<boolean> {
+  if (!supabase) return false;
+  const t = name.trim().toLowerCase();
+  if (!t) return false;
+  const stored = getStoredUsername()?.trim().toLowerCase() ?? "";
+  if (stored && stored === t) return false;
+
+  const { data, error } = await supabase.from("solves").select("display_name").limit(5000);
+  if (error || !data) return false;
+  return data.some((row) => row.display_name.trim().toLowerCase() === t);
 }
 
 export async function fetchLeaderboardEntries(puzzleId: string): Promise<SolveEntry[]> {
@@ -48,6 +65,10 @@ export async function submitLeaderboardScore(params: {
 
   if (error) {
     console.error("SUPABASE INSERT ERROR:", error);
+    const code = (error as { code?: string }).code;
+    if (code === "23505") {
+      return { ok: false, error: "duplicate" };
+    }
     return { ok: false, error: error.message };
   }
   const id = data?.id;

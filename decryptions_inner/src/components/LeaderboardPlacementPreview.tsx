@@ -1,10 +1,12 @@
 import { Lightbulb } from "lucide-react";
+import { cn } from "./ui/utils";
 import type { SolveEntry } from "../lib/leaderboardApi";
 
 interface LeaderboardPlacementPreviewProps {
   rank: number;
   slice: SolveEntry[];
   highlightIndex: number;
+  className?: string;
 }
 
 function formatTime(seconds: number) {
@@ -17,13 +19,19 @@ export function LeaderboardPlacementPreview({
   rank,
   slice,
   highlightIndex,
+  className,
 }: LeaderboardPlacementPreviewProps) {
   if (slice.length === 0) return null;
 
   const startRank = rank - highlightIndex;
 
   return (
-    <div className="mx-auto mb-4 max-w-md rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50/80 p-4 shadow-md">
+    <div
+      className={cn(
+        "mx-auto mb-4 max-w-md rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50/80 p-4 shadow-md",
+        className,
+      )}
+    >
       <p className="mb-3 text-center text-sm font-semibold text-orange-900">
         You placed on the leaderboard
       </p>

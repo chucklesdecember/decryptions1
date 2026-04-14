@@ -20,6 +20,72 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-04-14-trump-attacks-pope-leo",
+    headline: "Trump Attacks Pope Leo",
+    date: "April 14, 2026",
+    category: "World News",
+    words: [
+      {
+        answer: "TRUMP",
+        clues: [
+          { type: "image", content: "/tea.png", alt: "Tea" },
+          { type: "operator", content: " + (" },
+          { type: "image", content: "/drum.png", alt: "Drum" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "d" },
+          { type: "operator", content: ") + " },
+          { type: "image", content: "/pea.png", alt: "Pea" },
+        ],
+      },
+      {
+        answer: "ATTACKS",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/bat-attacks.png", alt: "Bat" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/bee.png", alt: "Bee" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/tictac.png", alt: "Tic Tac" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/tick.png", alt: "Tick" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "ks" },
+        ],
+      },
+      {
+        answer: "POPE",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/hippo.png", alt: "Hippo" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/hip.png", alt: "Hip" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/ape.png", alt: "Ape" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "a" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "LEO",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/cable.png", alt: "Cable" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/cab.png", alt: "Taxi cab" },
+          { type: "operator", content: ") + " },
+          { type: "image", content: "/asl-o.png", alt: "ASL letter O" },
+        ],
+      },
+    ],
+    hints: [
+      "Hot drink + (instrument − D) + green vegetable",
+      "(Flying mammal − B) + (mint candy − tick) + ks",
+      "(Large animal − hip) + (primate − A)",
+      "(Cable − cab) + O",
+    ],
+  },
+  {
     id: "2026-04-13-trump-hormuz",
     headline: "Trump to Block Hormuz",
     date: "April 13, 2026",
@@ -241,5 +307,16 @@ export const getCurrentPuzzle = (today: Date = new Date()): Puzzle => {
   const todayKey = formatPuzzleDate(today);
   return puzzles.find((puzzle) => puzzle.date === todayKey) ?? puzzles[0];
 };
+
+/** Puzzles for archive UI: newest first (ids begin with ISO dates). */
+export function getArchivedPuzzlesSorted(): Puzzle[] {
+  return [...puzzles].sort((a, b) => b.id.localeCompare(a.id));
+}
+
+/** Archive list: past puzzles only (excludes the current daily puzzle). */
+export function getArchiveListPuzzles(today: Date = new Date()): Puzzle[] {
+  const currentId = getCurrentPuzzle(today).id;
+  return getArchivedPuzzlesSorted().filter((p) => p.id !== currentId);
+}
 
 export const currentPuzzle = getCurrentPuzzle();

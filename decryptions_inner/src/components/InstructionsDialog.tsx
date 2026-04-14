@@ -33,41 +33,45 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
         <DialogHeader>
           <DialogTitle>How to Play Decryptions</DialogTitle>
           <DialogDescription>
-            Learn how to solve rebus puzzles and decode the daily headlines.
+            Learn how to solve rebus puzzles and decode daily headlines.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div>
             <h4 className="mb-2">🎯 Goal</h4>
             <p className="text-sm text-muted-foreground">
-              Decode the daily news headline by solving each rebus puzzle word.
+              Decode the daily news headline by solving each rebus word.
             </p>
           </div>
-          
+
           <div>
             <h4 className="mb-2">🧩 How Rebus Works</h4>
             <p className="text-sm text-muted-foreground mb-2">
-              Each word is represented by a combination of images, letters, and symbols that you add together (like PEMDAS!).
+              Each word is built from images, letters, and symbols that you combine.
+            </p>
+            <p className="text-sm text-muted-foreground mb-1">
+              Example (addition): 🐝 + &quot;GIN&quot; = BEGIN
             </p>
             <p className="text-sm text-muted-foreground">
-              Example: 🐝 + "GIN" = BEGIN
+              <span className="font-medium text-foreground">Important:</span> When you see a minus (−),
+              remove the second word from the first. The second word will always be inside the first.
             </p>
           </div>
 
           <div>
             <h4 className="mb-2">💡 Tips</h4>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Look at each clue from left to right</li>
-              <li>Add the sounds together</li>
-              <li>Think about how images sound phonetically</li>
-              <li>Use hints if you get stuck!</li>
+              <li>Go left to right</li>
+              <li>Say the sounds out loud</li>
+              <li>Images often represent sounds or letters</li>
+              <li>Use hints if you get stuck</li>
             </ul>
           </div>
 
           <div>
             <h4 className="mb-2">⏱️ Timer</h4>
             <p className="text-sm text-muted-foreground">
-              Track how fast you can solve the puzzle and challenge yourself to beat your time!
+              Track how fast you solve the puzzle and try to beat your time
             </p>
           </div>
         </div>

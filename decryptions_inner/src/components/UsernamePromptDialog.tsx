@@ -13,25 +13,38 @@ import { Input } from "./ui/input";
 interface UsernamePromptDialogProps {
   open: boolean;
   onSave: (username: string) => void;
+  /** Return an error message if the name is invalid, or null if OK. */
+  validateUsername?: (username: string) => Promise<string | null>;
 }
 
-export function UsernamePromptDialog({ open, onSave }: UsernamePromptDialogProps) {
+export function UsernamePromptDialog({ open, onSave, validateUsername }: UsernamePromptDialogProps) {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     if (open) {
       setValue("");
       setError(null);
+      setIsChecking(false);
     }
   }, [open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const t = value.trim();
     if (!t) {
       setError("Please enter a username.");
       return;
+    }
+    if (validateUsername) {
+      setIsChecking(true);
+      const msg = await validateUsername(t);
+      setIsChecking(false);
+      if (msg) {
+        setError(msg);
+        return;
+      }
     }
     setError(null);
     onSave(t);
@@ -61,12 +74,17 @@ export function UsernamePromptDialog({ open, onSave }: UsernamePromptDialogProps
               maxLength={40}
               autoComplete="username"
               autoFocus
+              disabled={isChecking}
             />
             {error && <p className="text-sm text-red-700 mt-2">{error}</p>}
           </div>
           <DialogFooter>
-            <Button type="submit" className="w-full bg-black hover:bg-gray-800 text-[#fffbea]">
-              Continue
+            <Button
+              type="submit"
+              disabled={isChecking}
+              className="w-full bg-black hover:bg-gray-800 text-[#fffbea]"
+            >
+              {isChecking ? "Checking…" : "Continue"}
             </Button>
           </DialogFooter>
         </form>
