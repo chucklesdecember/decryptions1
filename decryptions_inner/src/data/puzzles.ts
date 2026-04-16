@@ -78,7 +78,7 @@ export const puzzles: Puzzle[] = [
           { type: "operator", content: ") + (" },
           { type: "image", content: "/llama.png", alt: "Llama" },
           { type: "operator", content: " - " },
-          { type: "text", content: "ama" },
+          { type: "text", content: "amas" },
           { type: "operator", content: ")" },
         ],
       },
