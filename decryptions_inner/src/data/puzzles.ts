@@ -20,6 +20,90 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-04-16-virginia-ex-lieutenant-governor-kills-wife",
+    headline: "Virginia Ex Lieutenant Governor Kills Wife",
+    date: "April 16, 2026",
+    category: "U.S. News",
+    words: [
+      {
+        answer: "VIRGINIA",
+        clues: [{ type: "image", content: "/virginia-outline.png", alt: "Virginia state outline" }],
+      },
+      {
+        answer: "EX",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/sex-gender-symbols.png", alt: "Gender symbols" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/s-cursive.png", alt: "Cursive s" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "LIEUTENANT",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/lion.png", alt: "Lion" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/on-switch.png", alt: "On switch" },
+          { type: "operator", content: ") + " },
+          { type: "image", content: "/eu-flag.png", alt: "EU flag" },
+          { type: "operator", content: " + " },
+          { type: "image", content: "/roman-ten.png", alt: "Roman numeral ten" },
+          { type: "operator", content: " + " },
+          { type: "image", content: "/ant.png", alt: "Ant" },
+        ],
+      },
+      {
+        answer: "GOVERNOR",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/gold-au.png", alt: "Gold Au on periodic table" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/ld-cursive.svg", alt: "Cursive ld" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/verizon-v.png", alt: "Verizon logo" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "izon" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "KILLS",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/kiwi.png", alt: "Kiwi fruit" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/wii.png", alt: "Nintendo Wii" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/llama.png", alt: "Llama" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "ama" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "WIFE",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/wig.png", alt: "Wig" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "g" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "fe" },
+        ],
+      },
+    ],
+    hints: [
+      "East Coast state",
+      "(Gender term - S)",
+      "(Big cat - switch word) + EU + ten + insect",
+      "(Chemical symbol - ld) + (phone company logo - izon)",
+      "(Green fruit - game console) + (Pack animal - ama)",
+      "(Hairpiece - G) + FE",
+    ],
+  },
+  {
     id: "2026-04-14-trump-attacks-pope-leo",
     headline: "Trump Attacks Pope Leo",
     date: "April 14, 2026",
