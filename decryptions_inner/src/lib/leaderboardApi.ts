@@ -25,21 +25,30 @@ export async function isDisplayNameTakenByAnother(name: string): Promise<boolean
   return data.some((row) => row.display_name.trim().toLowerCase() === t);
 }
 
+/** Rank: fastest time first; tie → fewer hints; tie → earlier submit (created_at). */
+function compareLeaderboardEntries(a: SolveEntry, b: SolveEntry): number {
+  if (a.time_seconds !== b.time_seconds) return a.time_seconds - b.time_seconds;
+  const ha = a.hints_used ?? 0;
+  const hb = b.hints_used ?? 0;
+  if (ha !== hb) return ha - hb;
+  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+}
+
 export async function fetchLeaderboardEntries(puzzleId: string): Promise<SolveEntry[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from("solves")
     .select("id, display_name, time_seconds, created_at, hints_used")
     .eq("puzzle_id", puzzleId)
-    .order("time_seconds", { ascending: true })
-    .order("created_at", { ascending: true })
-    .limit(100);
+    .limit(5000);
 
   if (error) {
     console.error("Leaderboard fetch error:", error);
     return [];
   }
-  return (data ?? []) as SolveEntry[];
+  const rows = (data ?? []) as SolveEntry[];
+  rows.sort(compareLeaderboardEntries);
+  return rows.slice(0, 100);
 }
 
 export async function submitLeaderboardScore(params: {

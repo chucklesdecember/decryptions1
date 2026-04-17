@@ -14,10 +14,10 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
 
   return (
     <div
-      className="h-screen w-screen flex items-center justify-center bg-amber-50"
+      className="relative isolate h-screen w-screen flex items-center justify-center bg-amber-50"
       style={{ backgroundColor: "#fffbea" }}
     >
-      <div className="flex flex-col items-center text-center">
+      <div className="relative z-0 flex flex-col items-center text-center">
         {/* Logo */}
         <div className="mb-6">
           {!logoLoadFailed ? (
@@ -50,11 +50,13 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
           Decryptions
         </h1>
 
-        {/* Play */}
-        <div className="mb-6">
+        {/* Play — Connections-style black pill, white label */}
+        <div className="relative z-10 mb-6 w-full max-w-sm px-4">
           <Button
+            type="button"
+            variant="black"
             onClick={onStartGame}
-            className="bg-black hover:bg-gray-800 text-[#fffbea] px-10 py-3 rounded-full text-lg transition-colors"
+            className="relative z-10 w-full rounded-full border-none bg-black px-6 py-4 text-base font-medium text-white shadow-none hover:opacity-90"
           >
             Play
           </Button>
@@ -62,6 +64,7 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
 
         {/* Date + Author */}
         <div className="text-sm text-gray-700">
+          <p className="mb-1 text-black">Today&apos;s Puzzle Made With Ana Stanisavljevic</p>
           <p className="font-bold">{puzzleDate}</p>
           <p>By Charlie November</p>
           <p>

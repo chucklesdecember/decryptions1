@@ -20,6 +20,86 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-04-18-acting-ice-director-to-resign",
+    headline: "Acting ICE Director To Resign",
+    date: "April 18, 2026",
+    category: "U.S. News",
+    words: [
+      {
+        answer: "ACTING",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/ace.png", alt: "Ace playing card" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "e" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/tinder.png", alt: "Tinder" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "der" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/g-wagon.png", alt: "G-Wagon" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/wagon.png", alt: "Wagon" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "ICE",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/ice-cube.png", alt: "Ice Cube" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/cube.png", alt: "Cube" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "DIRECTOR",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/diesel.png", alt: "Diesel pump" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/easel.png", alt: "Easel" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/rectangle.png", alt: "Rectangle" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/angle.png", alt: "Angle" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "or" },
+        ],
+      },
+      {
+        answer: "TO",
+        clues: [
+          { type: "image", content: "/tuna.png", alt: "Tuna" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/sodium.png", alt: "Sodium on periodic table" },
+        ],
+      },
+      {
+        answer: "RESIGN",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/rescue.png", alt: "Rescue" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/cue.png", alt: "Cue stick" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/sign.png", alt: "Sign" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "s" },
+          { type: "operator", content: ")" },
+        ],
+      },
+    ],
+    hints: [
+      "(Playing role - E) + (dating app - der) + (luxury SUV - wagon)",
+      "Rapper and actor with 'Cube' removed",
+      "(Fuel brand - easel) + (shape - angle) + or",
+      "Yellowfin, e.g. (4) - The chemical symbol of sodium.",
+      "(Emergency aid - cue) + (posted notice - S)",
+    ],
+  },
+  {
     id: "2026-04-16-virginia-ex-lieutenant-governor-kills-wife",
     headline: "Virginia Ex Lieutenant Governor Kills Wife",
     date: "April 16, 2026",
