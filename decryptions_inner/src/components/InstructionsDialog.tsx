@@ -73,6 +73,10 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
               <li>Go left to right</li>
               <li>Say the sounds out loud</li>
               <li>Images often represent sounds or letters</li>
+              <li>
+                Beware of potential homophones: words that sound alike but spell differently (e.g. there, their,
+                they&apos;re)
+              </li>
               <li>Use hints if you get stuck</li>
             </ul>
           </div>
