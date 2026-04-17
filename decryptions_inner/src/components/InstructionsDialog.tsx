@@ -38,28 +38,37 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div>
-            <h4 className="mb-2">🎯 Goal</h4>
+            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+              Goal
+            </h4>
             <p className="text-sm text-muted-foreground">
               Decode the daily news headline by solving each rebus word.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Each box is one word; together they spell out the headline of the day.
             </p>
           </div>
 
           <div>
-            <h4 className="mb-2">🧩 How Rebus Works</h4>
+            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+              How Rebus Works
+            </h4>
             <p className="text-sm text-muted-foreground mb-2">
               Each word is built from images, letters, and symbols that you combine.
             </p>
             <p className="text-sm text-muted-foreground mb-1">
-              Example (addition): 🐝 + &quot;GIN&quot; = BEGIN
+              Example (subtraction): 🎺 - 👽 = TRUMP
             </p>
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">Important:</span> When you see a minus (−),
-              remove the second word from the first. The second word will always be inside the first.
+              remove the second word from the first
             </p>
           </div>
 
           <div>
-            <h4 className="mb-2">💡 Tips</h4>
+            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+              Tips
+            </h4>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Go left to right</li>
               <li>Say the sounds out loud</li>
@@ -69,7 +78,9 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
           </div>
 
           <div>
-            <h4 className="mb-2">⏱️ Timer</h4>
+            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+              Timer
+            </h4>
             <p className="text-sm text-muted-foreground">
               Track how fast you solve the puzzle and try to beat your time
             </p>

@@ -86,18 +86,30 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
               >
                 {clue.type === 'image' && (() => {
                   const isBlink = clue.content === '/blink.png';
+                  const isCue = clue.content === '/cue.png';
                   return (
                     <div
                       className={
                         isBlink
                           ? 'flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted'
-                          : 'flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted'
+                          : isCue
+                            ? 'flex h-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border min-w-0'
+                            : 'flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted'
+                      }
+                      style={
+                        isCue
+                          ? {
+                              /* 75% of full aspect width at h-12; grey tile behind cue art */
+                              width: 'min(100%, calc(3rem * 1024 / 414 * 0.75))',
+                              backgroundColor: '#e5e7eb',
+                            }
+                          : undefined
                       }
                     >
                       <ImageWithFallback
                         src={clue.content}
                         alt={clue.alt || 'puzzle clue'}
-                        className="w-full h-full object-contain"
+                        className="h-full w-full max-h-full object-contain object-center"
                       />
                     </div>
                   );

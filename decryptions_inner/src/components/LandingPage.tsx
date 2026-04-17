@@ -64,9 +64,9 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
 
         {/* Date + Author */}
         <div className="text-sm text-gray-700">
-          <p className="mb-1 text-black">Today&apos;s Puzzle Made With Ana Stanisavljevic</p>
           <p className="font-bold">{puzzleDate}</p>
           <p>By Charlie November</p>
+          <p className="mb-1 text-black">Today&apos;s Puzzle Made With Ana Stanisavljevic</p>
           <p>
             Contact:{" "}
             <a
@@ -85,6 +85,7 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
             <Archive className="h-4 w-4" />
             Archive
           </Button>
+          
         </div>
       </div>
     </div>
