@@ -70,7 +70,6 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
               Tips
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Say the sounds out loud</li>
               <li>Images often represent sounds or letters</li>
               <li>
                 Beware of potential homophones: words that sound alike but spell differently (e.g. there, their,
