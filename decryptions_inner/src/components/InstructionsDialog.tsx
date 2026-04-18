@@ -70,7 +70,6 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
               Tips
             </h4>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Go left to right</li>
               <li>Say the sounds out loud</li>
               <li>Images often represent sounds or letters</li>
               <li>
