@@ -66,7 +66,6 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
         <div className="text-sm text-gray-700">
           <p className="font-bold">{puzzleDate}</p>
           <p>By Charlie November</p>
-          <p className="mb-1 text-black">Today&apos;s Puzzle Made With Ana Stanisavljevic</p>
           <p>
             Contact:{" "}
             <a

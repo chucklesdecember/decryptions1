@@ -20,6 +20,76 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-04-21-louisiana-shooting-kills-8-children",
+    headline: "Louisiana Shooting Kills 8 Children",
+    date: "April 21, 2026",
+    category: "U.S. News",
+    words: [
+      {
+        answer: "LOUISIANA",
+        clues: [{ type: "image", content: "/louisiana-outline.png", alt: "Louisiana state outline" }],
+      },
+      {
+        answer: "SHOOTING",
+        clues: [
+          { type: "image", content: "/shoe.png", alt: "Shoe" },
+          { type: "operator", content: " + " },
+          { type: "image", content: "/tea.png", alt: "Tea" },
+          { type: "operator", content: " + (" },
+          { type: "image", content: "/bing.png", alt: "Bing logo" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/bee.png", alt: "Bee" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "KILLS",
+        clues: [
+          { type: "image", content: "/potassium.png", alt: "Potassium on periodic table" },
+          { type: "operator", content: " + (" },
+          { type: "image", content: "/pill.png", alt: "Pill" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/pea.png", alt: "Pea" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "s" },
+        ],
+      },
+      {
+        answer: "8",
+        clues: [
+          { type: "image", content: "/xv.png", alt: "Roman numeral XV" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/vii.png", alt: "Roman numeral VII" },
+        ],
+      },
+      {
+        answer: "CHILDREN",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/chilis.png", alt: "Chili's logo" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "is" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/dr-pepper.png", alt: "Dr Pepper logo" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/pepper.png", alt: "Pepper" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/hen.png", alt: "Hen" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "h" },
+          { type: "operator", content: ")" },
+        ],
+      },
+    ],
+    hints: [
+      "Southern state",
+      "What goes on foot? + tea + (search engine - B)",
+      "K + (medicine tablet - P) + S",
+      "Half of XXX minus seven",
+      "(Restaurant chain - is) + (soda brand - pepper) + (female farm bird - H)",
+    ],
+  },
+  {
     id: "2026-04-18-acting-ice-director-to-resign",
     headline: "Acting ICE Director To Resign",
     date: "April 18, 2026",

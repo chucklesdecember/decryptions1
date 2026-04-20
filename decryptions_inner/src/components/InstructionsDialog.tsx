@@ -61,7 +61,7 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
             </p>
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">Important:</span> When you see a minus (−),
-              remove the second word from the first
+              remove the 2nd word from the 1st
             </p>
           </div>
 
@@ -72,8 +72,7 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
               <li>Images often represent sounds or letters</li>
               <li>
-                Beware of potential homophones: words that sound alike but spell differently (e.g. there, their,
-                they&apos;re)
+                Watch for homophones: words sounding the same but spelled differently.
               </li>
               <li>Use hints if you get stuck</li>
             </ul>
