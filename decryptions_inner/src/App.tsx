@@ -521,6 +521,7 @@ export default function App() {
         hintsUsed={hintsUsed}
         puzzleDate={currentPuzzle.date}
         puzzleId={currentPuzzle.id}
+        articleUrl={currentPuzzle.articleUrl}
         playerRowId={getStoredLeaderboardRowId(currentPuzzle.id)}
         onLeaderboard={() => {
           setShowShareDialog(false);

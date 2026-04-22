@@ -7,7 +7,7 @@ import {
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { cn } from "./ui/utils";
-import { Share2, Check, Copy, Trophy } from "lucide-react";
+import { Share2, Check, Copy, ExternalLink, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -26,6 +26,8 @@ interface ShareDialogProps {
   /** Daily puzzle date label, e.g. "April 14, 2026" */
   puzzleDate: string;
   puzzleId: string;
+  /** When set, shown as the right-hand action instead of Copy. */
+  articleUrl?: string;
   /** Player's row in `solves` after submit (localStorage); used to slice the leaderboard */
   playerRowId: string | null;
   onLeaderboard?: () => void;
@@ -66,6 +68,7 @@ export function ShareDialog({
   hintsUsed,
   puzzleDate,
   puzzleId,
+  articleUrl,
   playerRowId,
   onLeaderboard,
 }: ShareDialogProps) {
@@ -238,19 +241,33 @@ export function ShareDialog({
                 <Share2 className="w-4 h-4" />
                 Share Result
               </Button>
-              <Button onClick={handleCopy} variant="outline" className="gap-2 sm:min-w-[100px]">
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 text-green-600" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    Copy
-                  </>
-                )}
-              </Button>
+              {articleUrl ? (
+                <Button variant="outline" className="gap-2 sm:min-w-[100px]" asChild>
+                  <a
+                    href={articleUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => posthog.capture("article_link_clicked", { puzzle_id: puzzleId })}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Article
+                  </a>
+                </Button>
+              ) : (
+                <Button onClick={handleCopy} variant="outline" className="gap-2 sm:min-w-[100px]">
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 text-green-600" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>

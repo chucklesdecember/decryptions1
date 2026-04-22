@@ -16,6 +16,8 @@ export interface Puzzle {
   headline: string;
   words: PuzzleWord[];
   hints: string[];
+  /** Optional link to the real news story, shown after solve. */
+  articleUrl?: string;
 }
 
 export const puzzles: Puzzle[] = [
@@ -93,6 +95,8 @@ export const puzzles: Puzzle[] = [
       "Grin minus aisle sound + O + ruler",
       "Bat minus tea + N",
     ],
+    articleUrl:
+      "https://www.reuters.com/business/healthcare-pharmaceuticals/uk-lawmakers-approve-lifetime-smoking-ban-todays-under-18s-2026-04-22/",
   },
   {
     id: "2026-04-21-korir-sets-boston-marathon-record",
@@ -186,7 +190,7 @@ export const puzzles: Puzzle[] = [
     ],
   },
   {
-    id: "2026-04-21-louisiana-shooting-kills-8-children",
+    id: "2026-04-20-louisiana-shooting-kills-8-children",
     headline: "Louisiana Shooting Kills 8 Children",
     date: "April 20, 2026",
     category: "U.S. News",
