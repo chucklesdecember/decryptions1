@@ -51,7 +51,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
     return (
       <div className="flex min-w-0 w-full flex-col gap-2">
         <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border-2 border-border bg-white p-3 shadow-sm transition-shadow hover:shadow-md">
-          <div className="mb-2 flex shrink-0 items-center justify-start">
+          <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
             <Dialog>
               <DialogTrigger asChild>
                 <Button
@@ -75,6 +75,12 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                 </div>
               </DialogContent>
             </Dialog>
+            <span
+              className="min-w-6 text-center text-xs font-semibold tabular-nums leading-none text-muted-foreground"
+              aria-label={`Answer length: ${answer.length} letters`}
+            >
+              {answer.length}
+            </span>
           </div>
 
           {/* Single wrapping row of tokens; min-w-0 + overflow-hidden on card prevents bleed into adjacent grid cells */}
@@ -87,21 +93,24 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                 {clue.type === 'image' && (() => {
                   const isBlink = clue.content === '/blink.png';
                   const isCue = clue.content === '/cue.png';
+                  const isWideFlag = clue.content === '/puzzle-uk-flag.png';
+                  /** Light mat inside the tile so dark / transparent PNGs read clearly against the card. */
+                  const imageTile =
+                    'overflow-hidden rounded-lg border border-border bg-neutral-100 p-1 dark:bg-neutral-200';
                   return (
                     <div
                       className={
                         isBlink
-                          ? 'flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted'
-                          : isCue
-                            ? 'flex h-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border min-w-0'
-                            : 'flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted'
+                          ? `flex h-16 w-12 shrink-0 items-center justify-center ${imageTile}`
+                          : isCue || isWideFlag
+                            ? `flex h-12 shrink-0 items-center justify-center min-w-0 ${imageTile} ${isWideFlag ? 'w-[4.25rem] sm:w-20' : ''}`
+                            : `flex h-12 w-12 shrink-0 items-center justify-center ${imageTile}`
                       }
                       style={
-                        isCue
+                        isCue && !isWideFlag
                           ? {
-                              /* 75% of full aspect width at h-12; grey tile behind cue art */
+                              /* 75% of full aspect width at h-12 */
                               width: 'min(100%, calc(3rem * 1024 / 414 * 0.75))',
-                              backgroundColor: '#e5e7eb',
                             }
                           : undefined
                       }

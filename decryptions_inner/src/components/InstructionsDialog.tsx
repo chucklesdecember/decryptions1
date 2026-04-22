@@ -29,77 +29,78 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md gap-2 p-4 pt-12 sm:gap-2 sm:p-5 sm:pt-12">
+        <DialogHeader className="gap-1.5">
           <DialogTitle>How to Play Decryptions</DialogTitle>
-          <DialogDescription>
-            Learn how to solve rebus puzzles and decode daily headlines.
-          </DialogDescription>
+          <DialogDescription>Solve rebus puzzles to decode the daily headline.</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 text-sm text-muted-foreground">
           <div>
-            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+            <h4
+              className="mb-1 font-semibold text-foreground"
+              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
               Goal
             </h4>
-            <p className="text-sm text-muted-foreground">
-              Decode the daily news headline by solving each rebus word.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Each box is one word; together they spell out the headline of the day.
-            </p>
+            <p>Decode each word to reveal the full news headline.</p>
+            <p className="mt-1.5">Each box = one word.</p>
           </div>
 
           <div>
-            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
-              How Rebus Works
+            <h4
+              className="mb-1 font-semibold text-foreground"
+              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
+              How It Works
             </h4>
-            <p className="text-sm text-muted-foreground mb-2">
-              Each word is built from images, letters, and symbols that you combine.
-            </p>
-            <p className="text-sm text-muted-foreground mb-1">
-              Example (subtraction): 🎺 - 👽 = TRUMP
-            </p>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">Important:</span> When you see a minus (−),
-              remove the 2nd word from the 1st
-            </p>
+            <p className="mb-1.5">Words are built from images, letters, and symbols you combine.</p>
+            <p className="mb-0.5">Example (subtraction): 🎺 − 👽 = TRUMP</p>
+            <p>When you see a minus (−), remove the 2nd word from the 1st.</p>
           </div>
 
           <div>
-            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+            <h4
+              className="mb-1 font-semibold text-foreground"
+              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
               Tips
             </h4>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Images often represent sounds or letters</li>
-              <li>
-                Watch for homophones: words sounding the same but spelled differently.
-              </li>
-              <li>Use hints if you get stuck</li>
+            <ul className="list-inside list-disc space-y-0.5">
+              <li>Images can represent sounds or letters</li>
+              <li>Look for homophones (same sound, different spelling)</li>
+              <li>The number in the top right shows how many letters the answer has.</li>
+              <li>Use hints if needed</li>
             </ul>
           </div>
 
           <div>
-            <h4 className="mb-2 font-semibold text-foreground" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
+            <h4
+              className="mb-1 font-semibold text-foreground"
+              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
               Timer
             </h4>
-            <p className="text-sm text-muted-foreground">
-              Track how fast you solve the puzzle and try to beat your time
-            </p>
+            <p>Track your time and try to beat your best score.</p>
+            {showPlayButton ? (
+              <div className="mt-2 border-t border-border pt-2">
+                <Button
+                  type="button"
+                  size="xl"
+                  className="w-full text-base font-semibold"
+                  onClick={() => onOpenChange?.(false)}
+                >
+                  <Play className="size-5" />
+                  Play
+                </Button>
+                <p className="mt-1.5 text-center text-xs text-muted-foreground">Or tap ✕ above to close</p>
+              </div>
+            ) : (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Tap ✕ above or outside this box to close
+              </p>
+            )}
           </div>
         </div>
-        {showPlayButton && (
-          <div className="border-t pt-4 mt-2">
-            <Button
-              type="button"
-              size="xl"
-              className="w-full text-base font-semibold"
-              onClick={() => onOpenChange?.(false)}
-            >
-              <Play className="size-5" />
-              Play
-            </Button>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

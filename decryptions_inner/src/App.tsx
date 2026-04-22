@@ -372,7 +372,7 @@ export default function App() {
       <main
         className={`flex-1 overflow-y-auto overflow-x-hidden transition-all duration-300 ${isInstructionsOpen ? "blur-sm" : ""}`}
       >
-        <div className="max-w-5xl mx-auto px-4 py-6 min-h-full flex flex-col">
+        <div className="mx-auto flex max-w-5xl flex-col px-4 py-4 sm:py-6">
           {showLeaderboardView ? (
             <>
               <div className="flex items-center gap-3 mb-6">
@@ -424,7 +424,7 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="flex items-center justify-center mb-6">
+              <div className="mb-3 flex items-center justify-center sm:mb-5">
                 <RebusPuzzle
                   words={currentPuzzle.words}
                   onComplete={handlePuzzleComplete}

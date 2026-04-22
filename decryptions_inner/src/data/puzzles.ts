@@ -20,6 +20,81 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-04-22-uk-passes-lifetime-smoking-ban",
+    headline: "UK Passes Lifetime Smoking Ban",
+    date: "April 22, 2026",
+    category: "World News",
+    words: [
+      {
+        answer: "UK",
+        clues: [{ type: "image", content: "/puzzle-uk-flag.png", alt: "United Kingdom flag" }],
+      },
+      {
+        answer: "PASSES",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/puzzle-compass.png", alt: "Compass" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "com" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/puzzle-pies-grid.png", alt: "Pies" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/puzzle-pi-symbol.png", alt: "Pi" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "LIFETIME",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/puzzle-lifeguard.png", alt: "Lifeguard" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/puzzle-kings-guard.png", alt: "Guard" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/puzzle-tire.png", alt: "Tire" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "re" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/puzzle-melon.png", alt: "Melon" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/puzzle-lawn.png", alt: "Lawn" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "SMOKING",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/puzzle-smile.png", alt: "Smile" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/puzzle-aisle.png", alt: "Wedding aisle" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "o" },
+          { type: "operator", content: " + " },
+          { type: "image", content: "/puzzle-chess-king.png", alt: "Chess king" },
+        ],
+      },
+      {
+        answer: "BAN",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/puzzle-bat-ban.png", alt: "Bat" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/puzzle-tea-ban.png", alt: "Tea" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "n" },
+        ],
+      },
+    ],
+    hints: [
+      "Only country to have won gold at every Winter Games (2)",
+      "Compass without 'com' + pies without pi",
+      "Pool rescuer minus guard + wheel minus re + melon minus lawn sound",
+      "Grin minus aisle sound + O + ruler",
+      "Bat minus tea + N",
+    ],
+  },
+  {
     id: "2026-04-21-korir-sets-boston-marathon-record",
     headline: "Korir Sets Boston Marathon Record",
     date: "April 21, 2026",
