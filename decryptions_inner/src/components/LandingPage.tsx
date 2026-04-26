@@ -86,6 +86,11 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
           </Button>
           
         </div>
+
+        <div className="text-sm text-gray-700">
+          <p>New puzzles will not be made until after finals...expect a new puzzle on April 30th.</p>
+        </div>
+
       </div>
     </div>
   );
