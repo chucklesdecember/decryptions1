@@ -22,6 +22,80 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-05-01-mills-ends-maine-senate-bid",
+    headline: "Mills Ends Maine Senate Bid",
+    date: "May 1, 2026",
+    category: "Politics",
+    words: [
+      {
+        answer: "MILLS",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/mitt.png", alt: "Baseball mitt" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "TT" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/toll.png", alt: "Highway toll booth" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/tow-truck.png", alt: "Tow truck" },
+          { type: "operator", content: ") + " },
+          { type: "image", content: "/s-cursive.png", alt: "Cursive letter S" },
+        ],
+      },
+      {
+        answer: "ENDS",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/ken.png", alt: "Ken doll" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/potassium-k.png", alt: "Potassium on periodic table" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "S" },
+        ],
+      },
+      {
+        answer: "MAINE",
+        clues: [{ type: "image", content: "/maine-outline.png", alt: "Maine state outline" }],
+      },
+      {
+        answer: "SENATE",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/ski.png", alt: "Skier" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/key.png", alt: "Key logo" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/garden.png", alt: "Garden" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/guard.png", alt: "Security guard" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/karate.png", alt: "Karate" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/car.png", alt: "Car" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "BID",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/bible.png", alt: "Bible" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/bull-bid.png", alt: "Bull" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "D" },
+        ],
+      },
+    ],
+    hints: [
+      "Baseball glove without both tees + road charge without tow sound + fancy letter",
+      "Doll name without periodic K + one letter",
+      "New England state outline",
+      "Winter sport minus key sound + garden minus guard + martial art minus car",
+      "Holy book minus bull sound + one letter",
+    ],
+  },
+  {
     id: "2026-04-22-uk-passes-lifetime-smoking-ban",
     headline: "UK Passes Lifetime Smoking Ban",
     date: "April 22, 2026",

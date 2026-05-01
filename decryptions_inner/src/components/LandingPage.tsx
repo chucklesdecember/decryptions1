@@ -84,13 +84,7 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
             <Archive className="h-4 w-4" />
             Archive
           </Button>
-          
         </div>
-
-        <div className="text-sm text-gray-700">
-          <p>No new puzzles will be made until after finals...expect a new puzzle on April 30th.</p>
-        </div>
-
       </div>
     </div>
   );

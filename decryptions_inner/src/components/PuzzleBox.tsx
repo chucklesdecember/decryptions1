@@ -94,6 +94,8 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   const isBlink = clue.content === '/blink.png';
                   const isCue = clue.content === '/cue.png';
                   const isWideFlag = clue.content === '/puzzle-uk-flag.png';
+                  const isWideKeyOrGarden =
+                    clue.content === '/key.png' || clue.content === '/garden.png';
                   /** Light mat inside the tile so dark / transparent PNGs read clearly against the card. */
                   const imageTile =
                     'overflow-hidden rounded-lg border border-border bg-neutral-100 p-1 dark:bg-neutral-200';
@@ -102,12 +104,18 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                       className={
                         isBlink
                           ? `flex h-16 w-12 shrink-0 items-center justify-center ${imageTile}`
-                          : isCue || isWideFlag
-                            ? `flex h-12 shrink-0 items-center justify-center min-w-0 ${imageTile} ${isWideFlag ? 'w-[4.25rem] sm:w-20' : ''}`
+                          : isCue || isWideFlag || isWideKeyOrGarden
+                            ? `flex h-12 shrink-0 items-center justify-center min-w-0 ${imageTile} ${
+                                isWideFlag
+                                  ? 'w-[4.25rem] sm:w-20'
+                                  : isWideKeyOrGarden
+                                    ? 'w-[5.25rem] sm:w-24'
+                                    : ''
+                              }`
                             : `flex h-12 w-12 shrink-0 items-center justify-center ${imageTile}`
                       }
                       style={
-                        isCue && !isWideFlag
+                        isCue && !isWideFlag && !isWideKeyOrGarden
                           ? {
                               /* 75% of full aspect width at h-12 */
                               width: 'min(100%, calc(3rem * 1024 / 414 * 0.75))',
