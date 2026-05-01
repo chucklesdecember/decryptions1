@@ -94,8 +94,13 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   key={index}
                   className={cn(
                     'flex min-w-0 items-center justify-center',
-                    /* Key/garden: allow shrink on narrow iOS widths; default tiles stay fixed width */
-                    isKeyOrGardenImg ? 'shrink' : 'shrink-0',
+                    /*
+                     * Key/garden: wide PNG intrinsic width + flex `min-width:auto` can blow up the tile
+                     * on iOS. Lock the flex item with basis + grow-0; width lives on this wrapper.
+                     */
+                    isKeyOrGardenImg
+                      ? 'box-border h-12 shrink-0 grow-0 basis-[3.25rem] sm:basis-14'
+                      : 'shrink-0',
                   )}
                 >
                   {clue.type === 'image' && (() => {
@@ -113,12 +118,12 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                           isBlink
                             ? `flex h-16 w-12 shrink-0 items-center justify-center ${imageTile}`
                             : isCue || isWideFlag || isWideKeyOrGarden
-                              ? `flex h-12 min-h-0 min-w-0 items-center justify-center ${imageTile} ${
+                              ? `flex min-h-0 min-w-0 items-center justify-center ${imageTile} ${
                                   isWideFlag
-                                    ? 'w-[4.25rem] shrink-0 sm:w-20'
+                                    ? 'h-12 w-[4.25rem] shrink-0 sm:w-20'
                                     : isWideKeyOrGarden
-                                      ? 'w-14 max-w-full shrink sm:w-[3.75rem]'
-                                      : 'shrink-0'
+                                      ? `h-full w-full max-w-full shrink-0`
+                                      : 'h-12 shrink-0'
                                 }`
                               : `flex h-12 w-12 shrink-0 items-center justify-center ${imageTile}`
                         }
