@@ -85,63 +85,72 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
 
           {/* Single wrapping row of tokens; min-w-0 + overflow-hidden on card prevents bleed into adjacent grid cells */}
           <div className="flex w-full min-w-0 flex-wrap content-center items-center justify-center gap-x-1 gap-y-2 sm:gap-x-1.5">
-            {clues.map((clue, index) => (
-              <div
-                key={index}
-                className="flex min-w-0 shrink-0 items-center justify-center"
-              >
-                {clue.type === 'image' && (() => {
-                  const isBlink = clue.content === '/blink.png';
-                  const isCue = clue.content === '/cue.png';
-                  const isWideFlag = clue.content === '/puzzle-uk-flag.png';
-                  const isWideKeyOrGarden =
-                    clue.content === '/key.png' || clue.content === '/garden.png';
-                  /** Light mat inside the tile so dark / transparent PNGs read clearly against the card. */
-                  const imageTile =
-                    'overflow-hidden rounded-lg border border-border bg-neutral-100 p-1 dark:bg-neutral-200';
-                  return (
-                    <div
-                      className={
-                        isBlink
-                          ? `flex h-16 w-12 shrink-0 items-center justify-center ${imageTile}`
-                          : isCue || isWideFlag || isWideKeyOrGarden
-                            ? `flex h-12 shrink-0 items-center justify-center min-w-0 ${imageTile} ${
-                                isWideFlag
-                                  ? 'w-[4.25rem] sm:w-20'
-                                  : isWideKeyOrGarden
-                                    ? 'w-[5.25rem] sm:w-24'
-                                    : ''
-                              }`
-                            : `flex h-12 w-12 shrink-0 items-center justify-center ${imageTile}`
-                      }
-                      style={
-                        isCue && !isWideFlag && !isWideKeyOrGarden
-                          ? {
-                              /* 75% of full aspect width at h-12 */
-                              width: 'min(100%, calc(3rem * 1024 / 414 * 0.75))',
-                            }
-                          : undefined
-                      }
-                    >
-                      <ImageWithFallback
-                        src={clue.content}
-                        alt={clue.alt || 'puzzle clue'}
-                        className="h-full w-full max-h-full object-contain object-center"
-                      />
-                    </div>
-                  );
-                })()}
-                {clue.type === 'text' && (
-                  <span className={TEXT_TOKEN}>{clue.content}</span>
-                )}
-                {clue.type === 'operator' && (
-                  <span className={cn(OP_TOKEN, 'whitespace-pre')}>{clue.content}</span>
-                )}
-                {clue.type === 'symbol' && (
-                  <span className="text-xl sm:text-2xl">{clue.content}</span>
-                )}
-              </div>
-            ))}
+            {clues.map((clue, index) => {
+              const isKeyOrGardenImg =
+                clue.type === 'image' &&
+                (clue.content === '/key.png' || clue.content === '/garden.png');
+              return (
+                <div
+                  key={index}
+                  className={cn(
+                    'flex min-w-0 items-center justify-center',
+                    /* Key/garden: allow shrink on narrow iOS widths; default tiles stay fixed width */
+                    isKeyOrGardenImg ? 'shrink' : 'shrink-0',
+                  )}
+                >
+                  {clue.type === 'image' && (() => {
+                    const isBlink = clue.content === '/blink.png';
+                    const isCue = clue.content === '/cue.png';
+                    const isWideFlag = clue.content === '/puzzle-uk-flag.png';
+                    const isWideKeyOrGarden =
+                      clue.content === '/key.png' || clue.content === '/garden.png';
+                    /** Light mat inside the tile so dark / transparent PNGs read clearly against the card. */
+                    const imageTile =
+                      'overflow-hidden rounded-lg border border-border bg-neutral-100 p-1 dark:bg-neutral-200';
+                    return (
+                      <div
+                        className={
+                          isBlink
+                            ? `flex h-16 w-12 shrink-0 items-center justify-center ${imageTile}`
+                            : isCue || isWideFlag || isWideKeyOrGarden
+                              ? `flex h-12 min-h-0 min-w-0 items-center justify-center ${imageTile} ${
+                                  isWideFlag
+                                    ? 'w-[4.25rem] shrink-0 sm:w-20'
+                                    : isWideKeyOrGarden
+                                      ? 'w-14 max-w-full shrink sm:w-[3.75rem]'
+                                      : 'shrink-0'
+                                }`
+                              : `flex h-12 w-12 shrink-0 items-center justify-center ${imageTile}`
+                        }
+                        style={
+                          isCue && !isWideFlag && !isWideKeyOrGarden
+                            ? {
+                                /* 75% of full aspect width at h-12 */
+                                width: 'min(100%, calc(3rem * 1024 / 414 * 0.75))',
+                              }
+                            : undefined
+                        }
+                      >
+                        <ImageWithFallback
+                          src={clue.content}
+                          alt={clue.alt || 'puzzle clue'}
+                          className="h-full w-full min-h-0 min-w-0 max-h-full max-w-full object-contain object-center"
+                        />
+                      </div>
+                    );
+                  })()}
+                  {clue.type === 'text' && (
+                    <span className={TEXT_TOKEN}>{clue.content}</span>
+                  )}
+                  {clue.type === 'operator' && (
+                    <span className={cn(OP_TOKEN, 'whitespace-pre')}>{clue.content}</span>
+                  )}
+                  {clue.type === 'symbol' && (
+                    <span className="text-xl sm:text-2xl">{clue.content}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

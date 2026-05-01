@@ -68,7 +68,7 @@ export const puzzles: Puzzle[] = [
           { type: "image", content: "/garden.png", alt: "Garden" },
           { type: "operator", content: " - " },
           { type: "image", content: "/guard.png", alt: "Security guard" },
-          { type: "operator", content: ") + (" },
+          { type: "operator", content: ") +   (" },
           { type: "image", content: "/karate.png", alt: "Karate" },
           { type: "operator", content: " - " },
           { type: "image", content: "/car.png", alt: "Car" },
