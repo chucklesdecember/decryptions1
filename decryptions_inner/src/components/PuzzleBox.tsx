@@ -85,57 +85,43 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
 
           {/* Single wrapping row of tokens; min-w-0 + overflow-hidden on card prevents bleed into adjacent grid cells */}
           <div className="flex w-full min-w-0 flex-wrap content-center items-center justify-center gap-x-1 gap-y-2 sm:gap-x-1.5">
-            {clues.map((clue, index) => {
-              const isKeyOrGardenImg =
-                clue.type === 'image' &&
-                (clue.content === '/key.png' || clue.content === '/garden.png');
-              return (
-                <div
-                  key={index}
-                  className={cn(
-                    'flex min-w-0 items-center justify-center',
-                    /*
-                     * Key/garden: wide PNG intrinsic width + flex `min-width:auto` can blow up the tile
-                     * on iOS. Lock the flex item with basis + grow-0; width lives on this wrapper.
-                     */
-                    isKeyOrGardenImg
-                      ? 'box-border h-12 shrink-0 grow-0 basis-[3.25rem] sm:basis-14'
-                      : 'shrink-0',
-                  )}
-                >
-                  {clue.type === 'image' && (() => {
-                    const isBlink = clue.content === '/blink.png';
-                    const isCue = clue.content === '/cue.png';
-                    const isWideFlag = clue.content === '/puzzle-uk-flag.png';
-                    const isWideKeyOrGarden =
-                      clue.content === '/key.png' || clue.content === '/garden.png';
-                    /** Light mat inside the tile so dark / transparent PNGs read clearly against the card. */
-                    const imageTile =
-                      'overflow-hidden rounded-lg border border-border bg-neutral-100 p-1 dark:bg-neutral-200';
-                    return (
-                      <div
-                        className={
-                          isBlink
-                            ? `flex h-16 w-12 shrink-0 items-center justify-center ${imageTile}`
-                            : isCue || isWideFlag || isWideKeyOrGarden
-                              ? `flex min-h-0 min-w-0 items-center justify-center ${imageTile} ${
-                                  isWideFlag
-                                    ? 'h-12 w-[4.25rem] shrink-0 sm:w-20'
-                                    : isWideKeyOrGarden
-                                      ? `h-full w-full max-w-full shrink-0`
-                                      : 'h-12 shrink-0'
+            {clues.map((clue, index) => (
+              <div
+                key={index}
+                className="flex min-w-0 shrink-0 items-center justify-center"
+              >
+                {clue.type === 'image' && (() => {
+                  const isBlink = clue.content === '/blink.png';
+                  const isCue = clue.content === '/cue.png';
+                  const isWideFlag = clue.content === '/puzzle-uk-flag.png';
+                  const isWideKeyOrGarden =
+                    clue.content === '/key.png' || clue.content === '/garden.png';
+                  /** Light mat inside the tile so dark / transparent PNGs read clearly against the card. */
+                  const imageTile =
+                    'overflow-hidden rounded-lg border border-border bg-neutral-100 p-1 dark:bg-neutral-200';
+                  return (
+                    <div
+                      className={
+                        isBlink
+                          ? `flex h-16 w-12 shrink-0 items-center justify-center ${imageTile}`
+                          : isWideKeyOrGarden
+                            ? /* Same footprint as blink (Apr 13), width ↔ height: blink is h-16 w-12 */
+                              `flex h-12 w-16 shrink-0 items-center justify-center ${imageTile}`
+                            : isCue || isWideFlag
+                              ? `flex h-12 min-h-0 min-w-0 shrink-0 items-center justify-center ${imageTile} ${
+                                  isWideFlag ? 'w-[4.25rem] sm:w-20' : ''
                                 }`
                               : `flex h-12 w-12 shrink-0 items-center justify-center ${imageTile}`
-                        }
-                        style={
-                          isCue && !isWideFlag && !isWideKeyOrGarden
-                            ? {
-                                /* 75% of full aspect width at h-12 */
-                                width: 'min(100%, calc(3rem * 1024 / 414 * 0.75))',
-                              }
-                            : undefined
-                        }
-                      >
+                      }
+                      style={
+                        isCue && !isWideFlag && !isWideKeyOrGarden
+                          ? {
+                              /* 75% of full aspect width at h-12 */
+                              width: 'min(100%, calc(3rem * 1024 / 414 * 0.75))',
+                            }
+                          : undefined
+                      }
+                    >
                         <ImageWithFallback
                           src={clue.content}
                           alt={clue.alt || 'puzzle clue'}
@@ -154,8 +140,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                     <span className="text-xl sm:text-2xl">{clue.content}</span>
                   )}
                 </div>
-              );
-            })}
+            ))}
           </div>
         </div>
 
