@@ -75,6 +75,17 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
               charlie.november@duke.edu
             </a>
           </p>
+          <p className="mt-2">
+            Instagram:{" "}
+            <a
+              href="https://www.instagram.com/decryptions.official/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-black underline decoration-black/40 underline-offset-2 hover:decoration-black"
+            >
+              @decryptions.official
+            </a>
+          </p>
           <Button
             type="button"
             variant="outline"

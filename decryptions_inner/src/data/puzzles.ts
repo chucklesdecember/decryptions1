@@ -22,6 +22,79 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-05-03-us-reduces-troops-in-germany",
+    headline: "US Reduces Troops in Germany",
+    date: "May 3, 2026",
+    category: "World",
+    words: [
+      {
+        answer: "US",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/youtube.png", alt: "YouTube logo" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/tube.png", alt: "Tube" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "S" },
+        ],
+      },
+      {
+        answer: "REDUCES",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/tree.png", alt: "Tree" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/tea.png", alt: "Tea" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/duck.png", alt: "Duck" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/k-cursive.png", alt: "Cursive letter K" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "es" },
+        ],
+      },
+      {
+        answer: "TROOPS",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/trout.png", alt: "Trout" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/out.png", alt: "Umpire calling out" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/zoo.png", alt: "Zoo entrance" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "Z" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/ups.png", alt: "UPS shield logo" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "U" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "IN",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/cabin.png", alt: "Log cabin" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/cab.png", alt: "Taxi cab" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "GERMANY",
+        clues: [{ type: "image", content: "/germany-outline.png", alt: "Germany" }],
+      },
+    ],
+    hints: [
+      "Video platform minus tube + one letter",
+      "Tree without tea sound + duck without fancy K + two letters",
+      "Fish without out + animal park without Z + delivery company without fancy U",
+      "Cabin minus taxi",
+      "European country",
+    ],
+  },
+  {
     id: "2026-05-01-mills-ends-maine-senate-bid",
     headline: "Mills Ends Maine Senate Bid",
     date: "May 1, 2026",
