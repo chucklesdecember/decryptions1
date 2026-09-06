@@ -1,9 +1,16 @@
 -- Decryptions: accounts, private profiles, progress sync, account-linked leaderboard rows.
--- Run once in the Supabase SQL editor. Idempotent: safe to re-run.
+-- Run once in the Supabase SQL editor. Repeatable until the backend migration is applied.
 --
 -- After running this, also follow supabase/README.md (dashboard settings that SQL cannot change).
 
 begin;
+
+-- Never let an older deployment reopen client writes after backend lockdown.
+do $$ begin
+  if to_regclass('private.attempts') is not null then
+    raise exception 'Authoritative backend is installed; do not reapply the older accounts migration';
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- 1. profiles: one row per account. email is PRIVATE (owner-only RLS).

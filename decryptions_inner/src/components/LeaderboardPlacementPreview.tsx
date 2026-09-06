@@ -62,6 +62,7 @@ export function LeaderboardPlacementPreview({
                 >
                   {entry.display_name}
                 </span>
+                {!entry.verified && <span className="shrink-0 text-xs text-amber-800">Unverified</span>}
                 {isYou && (
                   <span className="shrink-0 text-xs font-normal text-orange-700">(you)</span>
                 )}
@@ -72,7 +73,7 @@ export function LeaderboardPlacementPreview({
                     className="inline-flex items-center gap-0.5"
                     aria-label={`${nHints} hint${nHints !== 1 ? "s" : ""}`}
                   >
-                    {Array.from({ length: nHints }).map((_, hi) => (
+                    {Array.from({ length: Math.min(5, nHints) }).map((_, hi) => (
                       <Lightbulb
                         key={`${entry.id}-p-${hi}`}
                         className="size-3 shrink-0 text-amber-500"

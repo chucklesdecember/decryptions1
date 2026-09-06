@@ -1,125 +1,63 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PuzzleBox } from './PuzzleBox';
+import { Button } from './ui/button';
+import type { PublicWord } from '../lib/gameApi';
 
-interface PuzzleClue {
-  type: 'image' | 'text' | 'symbol' | 'operator';
-  content: string;
-  alt?: string;
+interface Props {
+  words: PublicWord[];
+  completed: boolean;
+  checkWord: (index: number, guess: string) => Promise<boolean>;
+  revealHint: (index: number) => Promise<void>;
 }
-
-interface PuzzleWord {
-  answer: string;
-  clues: PuzzleClue[];
-}
-
-interface RebusPuzzleProps {
-  words: PuzzleWord[];
-  onComplete: () => void;
-  /** When false, solving all words does not call onComplete (e.g. headline submission wins instead). */
-  completeOnAllWords?: boolean;
-  isPaused?: boolean;
-  hints: string[];
-  onUseHint: () => void;
-  /** When true, show solved answers read-only and do not fire onComplete */
-  interactionLocked?: boolean;
-  /** Disable typing and hints without revealing answers (e.g. visitor must log in first). */
-  inputsDisabled?: boolean;
-}
-
-export function RebusPuzzle({
-  words,
-  onComplete,
-  completeOnAllWords = true,
-  isPaused = false,
-  hints,
-  onUseHint,
-  interactionLocked = false,
-  inputsDisabled = false,
-}: RebusPuzzleProps) {
-  const [userInputs, setUserInputs] = useState<string[]>(() =>
-    interactionLocked ? words.map((w) => w.answer.toUpperCase()) : words.map(() => ''),
-  );
-  const [correctAnswers, setCorrectAnswers] = useState<boolean[]>(() =>
-    interactionLocked ? words.map(() => true) : words.map(() => false),
-  );
-  const [revealedHints, setRevealedHints] = useState<boolean[]>(words.map(() => false));
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
+export function RebusPuzzle({ words, completed, checkWord, revealHint }: Props) {
+  const [inputs, setInputs] = useState(() => words.map(() => ''));
+  const inputsRef = useRef(inputs);
+  const [checks, setChecks] = useState<Record<number, { value: string; pending?: boolean; incorrect?: boolean; error?: string }>>({});
+  const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const alive = useRef(true);
+  const wordsRef = useRef(words); wordsRef.current = words;
   useEffect(() => {
-    if (interactionLocked) {
-      setUserInputs(words.map((w) => w.answer.toUpperCase()));
-      setCorrectAnswers(words.map(() => true));
-      setRevealedHints(words.map(() => false));
-    } else {
-      setUserInputs(words.map(() => ''));
-      setCorrectAnswers(words.map(() => false));
-      setRevealedHints(words.map(() => false));
-    }
-    inputRefs.current = [];
-  }, [words, interactionLocked]);
-
-  useEffect(() => {
-    if (!completeOnAllWords || interactionLocked) return;
-    const allCorrect = correctAnswers.every((isCorrect) => isCorrect);
-    if (allCorrect && correctAnswers.length > 0) {
-      onComplete();
-    }
-  }, [completeOnAllWords, interactionLocked, correctAnswers, onComplete]);
-
-  const handleInputChange = (index: number, value: string) => {
-    if (interactionLocked || inputsDisabled) return;
-    const newInputs = [...userInputs];
-    newInputs[index] = value;
-    setUserInputs(newInputs);
-
-    const newCorrect = [...correctAnswers];
-    const isCorrect = value.toUpperCase() === words[index].answer.toUpperCase();
-    newCorrect[index] = isCorrect;
-    setCorrectAnswers(newCorrect);
-
-    // Auto-focus next input when current word is correct
-    if (isCorrect && index < words.length - 1) {
-      // Find next unanswered question
-      for (let i = index + 1; i < words.length; i++) {
-        if (!newCorrect[i]) {
-          setTimeout(() => {
-            inputRefs.current[i]?.focus();
-          }, 300);
-          break;
-        }
+    alive.current = true;
+    return () => { alive.current = false; Object.values(timers.current).forEach(clearTimeout); };
+  }, []);
+  const validate = async (index: number, value: string) => {
+    if (wordsRef.current[index].acceptedAnswer != null) return;
+    setChecks(c => ({ ...c, [index]: { value, pending: true } }));
+    try {
+      const correct = await checkWord(index, value);
+      if (!alive.current || inputsRef.current[index] !== value) return;
+      setChecks(c => ({ ...c, [index]: { value, incorrect: !correct } }));
+      if (correct) {
+        const next = wordsRef.current.findIndex((w, i) => i > index && w.acceptedAnswer == null);
+        if (next >= 0) refs.current[next]?.focus();
       }
+    } catch (err) {
+      if (alive.current && inputsRef.current[index] === value) setChecks(c => ({ ...c, [index]: {
+        value, error: err instanceof Error ? err.message : 'Could not check this word. Retry.',
+      } }));
     }
   };
-
-  return (
-    <div className="grid w-full max-w-3xl grid-cols-1 gap-3 md:grid-cols-2">
-      {words.map((word, index) => (
-        <div key={index} className="min-w-0 w-full max-w-full overflow-hidden">
-          <PuzzleBox
-            ref={(el) => {
-              inputRefs.current[index] = el;
-            }}
-            clues={word.clues}
-            answer={word.answer}
-            userInput={userInputs[index]}
-            onInputChange={(value) => handleInputChange(index, value)}
-            isCorrect={correctAnswers[index]}
-            isPaused={isPaused}
-            hint={hints[index]}
-            onRevealHint={() => {
-              if (interactionLocked || inputsDisabled) return;
-              if (!revealedHints[index]) {
-                const updated = [...revealedHints];
-                updated[index] = true;
-                setRevealedHints(updated);
-                onUseHint();
-              }
-            }}
-            locked={interactionLocked}
-            inputsDisabled={inputsDisabled}
-          />
-        </div>
-      ))}
-    </div>
-  );
+  const change = (index: number, value: string) => {
+    const next = [...inputsRef.current]; next[index] = value;
+    inputsRef.current = next; setInputs(next);
+    clearTimeout(timers.current[index]);
+    setChecks(c => ({ ...c, [index]: { value } }));
+    if (value.length === words[index].answerLength) timers.current[index] = setTimeout(() => void validate(index, value), 300);
+  };
+  return <div className="grid w-full max-w-3xl grid-cols-1 gap-3 md:grid-cols-2">
+    {words.map((word, index) => {
+      const checked = checks[index]?.value === inputs[index] ? checks[index] : undefined;
+      return <div key={index} className="min-w-0">
+        <PuzzleBox ref={el => { refs.current[index] = el; }} clues={word.clues} answerLength={word.answerLength}
+          label={`Word ${index + 1}`} userInput={word.acceptedAnswer ?? inputs[index]}
+          onInputChange={value => change(index, value)} isCorrect={word.acceptedAnswer != null}
+          incorrect={checked?.incorrect} hint={word.hint} onRevealHint={() => revealHint(index)} locked={completed} />
+        {checked?.pending && !word.acceptedAnswer && <p className="mt-1 text-xs text-muted-foreground" role="status">Checking…</p>}
+        {checked?.error && !word.acceptedAnswer && <div className="mt-1 text-sm text-red-700" role="alert">
+          <p>{checked.error}</p><Button variant="outline" size="sm" onClick={() => void validate(index, inputsRef.current[index])}>Retry word {index + 1}</Button>
+        </div>}
+      </div>;
+    })}
+  </div>;
 }

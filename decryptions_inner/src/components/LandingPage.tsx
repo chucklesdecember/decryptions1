@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { getCurrentPuzzle } from "../data/puzzles";
+
 import { Archive } from "lucide-react";
 import { AccountMenu } from "./AccountMenu";
 
 interface LandingPageProps {
+  puzzleDate: string;
+  unavailable?: boolean;
   onStartGame: () => void;
   onOpenArchive: () => void;
 }
 
-export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
-  const puzzleDate = getCurrentPuzzle().date;
+export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, unavailable }: LandingPageProps) {
   const [logoLoadFailed, setLogoLoadFailed] = useState(false);
 
   return (
@@ -57,6 +58,7 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
             type="button"
             variant="black"
             onClick={onStartGame}
+            disabled={unavailable}
             className="relative z-10 h-12 w-full rounded-full border-none bg-black px-6 text-base font-medium text-white shadow-none hover:opacity-90"
           >
             Play

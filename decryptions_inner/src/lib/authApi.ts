@@ -155,17 +155,6 @@ export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
   return (data as Profile | null) ?? null;
 }
 
-/** Attach this device's pre-account leaderboard rows to the signed-in account. */
-export async function claimSolves(rowIds: string[]): Promise<number> {
-  if (!supabase || rowIds.length === 0) return 0;
-  const { data, error } = await supabase.rpc("claim_solves", { p_ids: rowIds });
-  if (error) {
-    console.error("claim_solves error:", error);
-    return 0;
-  }
-  return typeof data === "number" ? data : 0;
-}
-
 // ---------------------------------------------------------------------------
 // Client-side validation shared by the auth dialog.
 // ---------------------------------------------------------------------------

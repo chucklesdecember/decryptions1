@@ -95,7 +95,7 @@ export function AuthDialog({ open, onOpenChange, onAttemptStart, onAuthenticated
     setTab(next as Tab);
     setError(null);
     setInfo(null);
-    setCaptchaToken(null);
+    resetCaptcha();
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -122,6 +122,7 @@ export function AuthDialog({ open, onOpenChange, onAttemptStart, onAuthenticated
       setSyncing(true);
       await onAuthenticated("login", res.user);
     } finally {
+      setSyncing(false);
       setBusy(false);
       resetCaptcha();
     }
@@ -172,6 +173,7 @@ export function AuthDialog({ open, onOpenChange, onAttemptStart, onAuthenticated
       setSyncing(true);
       await onAuthenticated("signup", res.user);
     } finally {
+      setSyncing(false);
       setBusy(false);
       resetCaptcha();
     }
@@ -195,6 +197,7 @@ export function AuthDialog({ open, onOpenChange, onAttemptStart, onAuthenticated
       }
       setInfo("If an account exists for that email, a reset link is on its way.");
     } finally {
+      setSyncing(false);
       setBusy(false);
       resetCaptcha();
     }

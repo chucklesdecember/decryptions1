@@ -80,7 +80,7 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
             >
               Timer
             </h4>
-            <p>Track your time and try to beat your best score.</p>
+            <p>You get one solve per account for each puzzle. Time starts when the clues open and keeps running when you hide the puzzle, leave, or lose your connection.</p>
             {showPlayButton ? (
               <div className="mt-2 border-t border-border pt-2">
                 <Button
