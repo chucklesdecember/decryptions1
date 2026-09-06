@@ -1,37 +1,34 @@
 import { useEffect, useState } from "react";
-import { Input } from "./ui/input";
-import { Lightbulb } from "lucide-react";
-import { supabase } from "../lib/supabase";
-import {
-  fetchLeaderboardEntries,
-  isDisplayNameTakenByAnother,
-  submitLeaderboardScore,
-  type SolveEntry,
-} from "../lib/leaderboardApi";
-import {
-  getStoredUsername,
-  hasLeaderboardSubmittedLocally,
-  markLeaderboardSubmittedLocally,
-  setStoredLeaderboardRowId,
-} from "../lib/decryptionsStorage";
+import { Lightbulb, LogIn } from "lucide-react";
 import posthog from "posthog-js";
+import { supabase } from "../lib/supabase";
+import { fetchLeaderboardEntries, type SolveEntry } from "../lib/leaderboardApi";
+import { ensureLeaderboardPosted } from "../lib/progressSync";
+import {
+  getStoredLeaderboardRowId,
+  hasLeaderboardSubmittedLocally,
+} from "../lib/decryptionsStorage";
+import { useAuth } from "../lib/auth";
+import { Button } from "./ui/button";
 
 interface LeaderboardProps {
   puzzleId: string;
   solveTime: number;
   isSolved: boolean;
   hintsUsed: number;
-  /** Called after a successful manual submit from this view (row id for preview sync). */
+  /** Called after a successful post from this view (row id for preview sync). */
   onSubmitted?: (rowId: string) => void;
 }
 
 export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed, onSubmitted }: LeaderboardProps) {
+  const { status, user, profile, requireAuth, progressVersion, bumpProgress } = useAuth();
   const [entries, setEntries] = useState<SolveEntry[]>([]);
-  const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const myRowId = getStoredLeaderboardRowId(puzzleId);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -44,63 +41,43 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed, onSubmit
       setIsLoading(false);
       return;
     }
-
     setIsLoading(true);
     const rows = await fetchLeaderboardEntries(puzzleId);
     setEntries(rows);
     setIsLoading(false);
   };
 
+  // Reload when the puzzle changes or synced progress lands (e.g. auto-post after solve).
   useEffect(() => {
     setHasSubmitted(hasLeaderboardSubmittedLocally(puzzleId));
-    setDisplayName(getStoredUsername() ?? "");
     setError(null);
     void loadLeaderboard();
-  }, [puzzleId]);
+  }, [puzzleId, progressVersion]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabase || isSubmitting || !isSolved || hasSubmitted) return;
-
-    const trimmed = displayName.trim();
-    if (!trimmed) {
-      setError("Please enter a display name.");
-      return;
-    }
-
-    if (await isDisplayNameTakenByAnother(trimmed)) {
-      setError("That username is already taken. Try another.");
-      return;
-    }
-
-    setError(null);
+  /** Retry path: signed-in players are normally posted automatically when they solve. */
+  const handlePost = async () => {
+    if (!supabase || !user || isSubmitting || !isSolved || hasSubmitted) return;
     setIsSubmitting(true);
-
-    const res = await submitLeaderboardScore({
+    setError(null);
+    const { rowId, posted } = await ensureLeaderboardPosted({
+      userId: user.id,
+      username: profile?.username ?? "",
       puzzleId,
-      displayName: trimmed,
       timeSeconds: solveTime,
       hintsUsed,
     });
-
-    if (!res.ok) {
-      setError(
-        res.error === "duplicate"
-          ? "That username is already taken. Try another."
-          : "Could not submit your score.",
-      );
-      setIsSubmitting(false);
+    setIsSubmitting(false);
+    if (!rowId) {
+      setError("Could not post your time. Try again in a moment.");
       return;
     }
-
-    posthog.capture("leaderboard_submitted");
-    markLeaderboardSubmittedLocally(puzzleId);
-    setStoredLeaderboardRowId(puzzleId, res.id);
+    if (posted) posthog.capture("leaderboard_submitted", { puzzle_id: puzzleId });
     setHasSubmitted(true);
-    setIsSubmitting(false);
-    onSubmitted?.(res.id);
-    await loadLeaderboard();
+    onSubmitted?.(rowId);
+    bumpProgress();
   };
+
+  const showPostBox = !!supabase && isSolved && !hasSubmitted;
 
   return (
     <section className="rounded-xl border border-gray-300 bg-white p-4 text-gray-900 shadow-md sm:p-5 mb-4">
@@ -115,44 +92,49 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed, onSubmit
         </p>
       )}
 
-      {supabase && isSolved && !hasSubmitted && (
-        <form
-          onSubmit={handleSubmit}
-          className="mb-6 rounded-lg border-2 border-gray-200 bg-gray-50 p-4 sm:p-5"
-        >
-          <h4 className="mb-1 text-lg font-semibold text-black">Join the leaderboard</h4>
+      {showPostBox && status === "signed_out" && (
+        <div className="mb-6 rounded-lg border-2 border-gray-200 bg-gray-50 p-4 sm:p-5">
+          <h4 className="mb-1 text-lg font-semibold text-black">Post your time</h4>
           <p className="mb-4 text-sm text-gray-700">
-            Enter a username to join the leaderboard. It will appear next to your time.
+            Log in to put your {formatTime(solveTime)} on the leaderboard under your username.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-            <Input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your username"
-              maxLength={40}
-              disabled={isSubmitting}
-              className="h-12 border-2 border-gray-300 bg-white text-base text-black placeholder:text-gray-500 focus-visible:border-gray-900 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 sm:flex-1"
-              autoComplete="username"
-            />
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                backgroundColor: "black",
-                color: "white",
-                border: "2px solid black",
-                padding: "12px 20px",
-                fontSize: "16px",
-                fontWeight: "600",
-                borderRadius: "8px",
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-                opacity: isSubmitting ? 0.6 : 1,
-              }}
-            >
-              {isSubmitting ? "Submitting..." : "Submit score"}
-            </button>
-          </div>
-        </form>
+          <Button
+            type="button"
+            onClick={() => requireAuth()}
+            className="h-11 gap-2 bg-black px-5 text-base font-semibold text-white hover:bg-gray-800"
+          >
+            <LogIn className="h-4 w-4" />
+            Log in or sign up
+          </Button>
+        </div>
+      )}
+
+      {showPostBox && status === "signed_in" && (
+        <div className="mb-6 rounded-lg border-2 border-gray-200 bg-gray-50 p-4 sm:p-5">
+          <h4 className="mb-1 text-lg font-semibold text-black">Post your time</h4>
+          <p className="mb-4 text-sm text-gray-700">
+            Your {formatTime(solveTime)} isn't on the leaderboard yet. It will appear as{" "}
+            <span className="font-semibold text-black">{profile?.username ?? "your username"}</span>.
+          </p>
+          <button
+            type="button"
+            onClick={() => void handlePost()}
+            disabled={isSubmitting}
+            style={{
+              backgroundColor: "black",
+              color: "white",
+              border: "2px solid black",
+              padding: "12px 20px",
+              fontSize: "16px",
+              fontWeight: "600",
+              borderRadius: "8px",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+              opacity: isSubmitting ? 0.6 : 1,
+            }}
+          >
+            {isSubmitting ? "Posting..." : "Post my time"}
+          </button>
+        </div>
       )}
 
       {supabase && isSolved && hasSubmitted && (
@@ -171,14 +153,20 @@ export function Leaderboard({ puzzleId, solveTime, isSolved, hintsUsed, onSubmit
         <div className="space-y-2">
           {entries.map((entry, index) => {
             const nHints = entry.hints_used ?? 0;
+            const isMe = myRowId != null && entry.id === myRowId;
             return (
               <div
                 key={entry.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
+                className={
+                  isMe
+                    ? "flex items-center justify-between gap-3 rounded-lg border-2 border-orange-400 bg-orange-50 px-3 py-2.5"
+                    : "flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5"
+                }
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="w-7 shrink-0 tabular-nums text-xs font-semibold text-gray-600">{index + 1}.</span>
                   <span className="truncate text-sm font-medium text-black">{entry.display_name}</span>
+                  {isMe && <span className="shrink-0 text-xs text-orange-700">(you)</span>}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {nHints > 0 && (
