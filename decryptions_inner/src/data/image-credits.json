@@ -1,1 +1,62 @@
-[]
+[
+  {
+    "file": "bus.png",
+    "word": "BUS",
+    "source": "openverse",
+    "sourceId": "80a97e47-b5fa-44e8-8129-79170dd2d4f2",
+    "sourceUrl": "https://www.rawpixel.com/image/6588566/image-public-domain-blue-illustrations",
+    "downloadUrl": "https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA0L2pvYjcxMC0wNTgteF8xLmpwZw.jpg",
+    "author": "",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "\"School bus clipart, vehicle illustration\" is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.",
+    "fetchedAt": "2026-09-06T02:19:34Z",
+    "sha256": "cffbe871edb926dd21f261d56744d10c893bc2fc7974941f282e1d3d8e743e6f",
+    "puzzleId": "2026-09-05-us-hits-3-iran-tankers"
+  },
+  {
+    "file": "tank.png",
+    "word": "TANK",
+    "source": "openverse",
+    "sourceId": "df3a2f0f-1b20-4ee7-89f7-3db422081bfb",
+    "sourceUrl": "https://www.rawpixel.com/image/6333347/image-background-public-domain-green",
+    "downloadUrl": "https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvam9iNjgxLTAwMzkteC5qcGc.jpg",
+    "author": "",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "\"Green army tank illustration\" is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.",
+    "fetchedAt": "2026-09-06T02:22:23Z",
+    "sha256": "b27dda8d4d48b3269afedc27448397eb44a4a422c0e5f9ab324ddf7d2613068e",
+    "puzzleId": "2026-09-05-us-hits-3-iran-tankers"
+  },
+  {
+    "file": "deer-2.png",
+    "word": "DEER",
+    "source": "openverse",
+    "sourceId": "37531cb0-71aa-44d9-8c3d-4e514ec1cdec",
+    "sourceUrl": "https://www.rawpixel.com/image/7256880/vector-public-domain-illustrations-free",
+    "downloadUrl": "https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA2L2pvYjk0OC0wMjktdi1sNDdybGZsNy5qcGc.jpg",
+    "author": "",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "\"Jumping deer clipart, illustration vector\" is marked with CC0 1.0. To view the terms, visit https://creativecommons.org/publicdomain/zero/1.0/.",
+    "fetchedAt": "2026-09-06T02:23:48Z",
+    "sha256": "180158be6591a15a2b4fb6e2bf1aecbde4fd8249ea36bc9daa41c3643ae7b121",
+    "puzzleId": "2026-09-05-us-hits-3-iran-tankers"
+  },
+  {
+    "file": "iran-flag.png",
+    "word": "IRAN",
+    "source": "wikimedia",
+    "sourceId": "File:Flag_of_Iran.svg",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Flag_of_Iran.svg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Flag_of_Iran.svg/960px-Flag_of_Iran.svg.png",
+    "author": "SiBr4 (SVG); national flag of Iran",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Flag_of_Iran.svg#Licensing",
+    "attribution": "",
+    "fetchedAt": "2026-09-06T02:24:03Z",
+    "sha256": "b2f18d26e9780044d7e7cca4a84daf3319d2a42c1a37e6c4db675d242cfb55a3",
+    "puzzleId": "2026-09-05-us-hits-3-iran-tankers"
+  }
+]
