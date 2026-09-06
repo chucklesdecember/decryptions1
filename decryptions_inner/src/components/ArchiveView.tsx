@@ -22,14 +22,14 @@ export function ArchiveList({ onBack, onSelectPuzzle }: ArchiveListProps) {
   const items = getArchiveListPuzzles();
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 overflow-hidden">
+    <div className="h-app flex flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 overflow-hidden">
       <header className="border-b bg-white/80 backdrop-blur-sm shadow-sm flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
           <Button type="button" variant="outline" size="sm" onClick={onBack} className="gap-1">
             <ChevronLeft className="h-4 w-4" />
             Back
           </Button>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-primary mb-0 text-lg font-semibold">Archive</h1>
             <p className="text-xs text-muted-foreground">Past puzzles and leaderboards</p>
           </div>
@@ -116,10 +116,10 @@ export function ArchiveDetail({ puzzle, onBack }: ArchiveDetailProps) {
   const solveHintsStored = getStoredSolveHints(puzzle.id) ?? 0;
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 overflow-hidden">
+    <div className="h-app flex flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 overflow-hidden">
       <header className="border-b bg-white/80 backdrop-blur-sm shadow-sm flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button type="button" variant="outline" size="sm" onClick={onBack} className="gap-1">
+          <Button type="button" variant="outline" size="sm" onClick={onBack} className="gap-1 shrink-0">
             <ChevronLeft className="h-4 w-4" />
             All puzzles
           </Button>
@@ -136,7 +136,7 @@ export function ArchiveDetail({ puzzle, onBack }: ArchiveDetailProps) {
               {puzzle.category}
             </div>
             {showHeadline ? (
-              <h2 className="text-primary text-xl font-semibold mb-1">{puzzle.headline}</h2>
+              <h2 className="mb-1 text-xl font-semibold text-balance text-primary">{puzzle.headline}</h2>
             ) : (
               <p className="text-sm text-muted-foreground mb-1">
                 Headline unlocks after you solve this puzzle on this device.

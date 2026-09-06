@@ -29,7 +29,7 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-md gap-2 p-4 pt-12 sm:gap-2 sm:p-5 sm:pt-12">
+      <DialogContent className="sm:max-w-md gap-2 p-4 pt-12 sm:gap-2 sm:p-5 sm:pt-12">
         <DialogHeader className="gap-1.5">
           <DialogTitle>How to Play Decryptions</DialogTitle>
           <DialogDescription>Solve rebus puzzles to decode the daily headline.</DialogDescription>

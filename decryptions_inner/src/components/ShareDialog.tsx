@@ -162,14 +162,14 @@ export function ShareDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>🎉 Puzzle Solved!</DialogTitle>
           <DialogDescription>
             Share your results with friends and challenge them to beat your time!
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-2">
           <div className="bg-accent p-4 rounded-lg space-y-2">
             <p className="text-center">
               <span className="text-2xl">⏱️</span>
@@ -213,7 +213,7 @@ export function ShareDialog({
                 type="button"
                 className={cn(
                   "inline-flex w-full min-h-[52px] items-center justify-center gap-2 rounded-md px-4 py-2",
-                  "text-base font-bold text-white shadow-lg transition-[filter,box-shadow]",
+                  "text-center text-base font-bold leading-tight text-white shadow-lg transition-[filter,box-shadow]",
                   "ring-2 ring-amber-400/90 ring-offset-2 ring-offset-background",
                   "hover:brightness-110 hover:shadow-xl",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2",

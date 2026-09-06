@@ -36,8 +36,8 @@ export function Timer({ isActive, onTimeUpdate }: TimerProps) {
   };
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-accent rounded-lg">
-      <Clock className="w-4 h-4 text-muted-foreground" />
+    <div className="flex h-9 items-center gap-1.5 rounded-lg bg-accent px-2.5 text-sm sm:gap-2 sm:px-3 sm:text-base">
+      <Clock className="w-4 h-4 shrink-0 text-muted-foreground" />
       <span className="tabular-nums">{formatTime(time)}</span>
     </div>
   );

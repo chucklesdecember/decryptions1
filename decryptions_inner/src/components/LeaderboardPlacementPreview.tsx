@@ -28,7 +28,7 @@ export function LeaderboardPlacementPreview({
   return (
     <div
       className={cn(
-        "mx-auto mb-4 max-w-md rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50/80 p-4 shadow-md",
+        "mx-auto mb-4 w-full min-w-0 max-w-md rounded-xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50/80 p-4 shadow-md",
         className,
       )}
     >
@@ -61,10 +61,10 @@ export function LeaderboardPlacementPreview({
                   }
                 >
                   {entry.display_name}
-                  {isYou && (
-                    <span className="ml-1.5 text-xs font-normal text-orange-700">(you)</span>
-                  )}
                 </span>
+                {isYou && (
+                  <span className="shrink-0 text-xs font-normal text-orange-700">(you)</span>
+                )}
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {nHints > 0 && (

@@ -312,29 +312,31 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 overflow-hidden">
+    <div className="h-app flex flex-col bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50 overflow-hidden">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm shadow-sm flex-shrink-0">
         <div className="max-w-5xl mx-auto px-4 py-2.5">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h1 className="text-primary mb-0.5">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <div className="min-w-0">
+              <h1 className="whitespace-nowrap text-lg font-semibold leading-tight text-primary sm:text-xl">
                 Decryptions
               </h1>
-              <p className="text-xs text-muted-foreground">
+              {/* Tagline only where there is room; on phones the controls need the width. */}
+              <p className="hidden text-xs text-muted-foreground sm:block">
                 Decode the News, One Puzzle at a Time
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+            <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => openArchive("game")}
-                className="gap-1.5 shrink-0"
+                className="h-9 shrink-0 gap-1.5 px-2.5 sm:px-3"
+                aria-label="Archive"
               >
                 <Archive className="h-4 w-4" />
-                Archive
+                <span className="hidden sm:inline">Archive</span>
               </Button>
               <Timer
                 isActive={isTimerActive}
@@ -346,6 +348,7 @@ export default function App() {
                 onClick={handleTogglePause}
                 disabled={isPuzzleComplete}
                 className="shrink-0"
+                aria-label={isPaused ? "Resume" : "Pause"}
               >
                 {isPaused ? (
                   <Play className="w-4 h-4" />
@@ -357,7 +360,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <div className="inline-block px-2.5 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">
               {currentPuzzle.category}
             </div>
@@ -375,7 +378,7 @@ export default function App() {
         <div className="mx-auto flex max-w-5xl flex-col px-4 py-4 sm:py-6">
           {showLeaderboardView ? (
             <>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="mb-6 flex flex-wrap items-center gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -384,7 +387,7 @@ export default function App() {
                 >
                   Back to puzzle
                 </Button>
-                <h2 className="text-primary mb-0">Results</h2>
+                <h2 className="text-lg font-semibold text-primary sm:text-xl">Results</h2>
               </div>
 
               <div className="p-4 bg-white rounded-xl shadow-md border border-border mb-4">
@@ -416,7 +419,7 @@ export default function App() {
           ) : (
             <>
               <div className="mb-4 text-center">
-                <h2 className="text-primary mb-0.5">
+                <h2 className="mb-0.5 text-lg font-semibold text-primary sm:text-xl">
                   Today's Headline
                 </h2>
                 <p className="text-xs text-muted-foreground">
@@ -470,7 +473,7 @@ export default function App() {
               {isPuzzleComplete && (
                 <div className="p-4 bg-white rounded-xl shadow-md text-center border-2 border-green-200 mb-4">
                   <p className="text-2xl mb-1">🎉</p>
-                  <h3 className="text-green-700 mb-1">
+                  <h3 className="mb-1 text-lg font-semibold text-green-700">
                     {alreadySolvedOnDevice
                       ? "Already completed on this device"
                       : "Congratulations!"}
@@ -493,11 +496,11 @@ export default function App() {
       {/* Pause Overlay */}
       {isPaused && !isInstructionsOpen && !isPuzzleComplete && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-sm mx-4">
+          <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-2xl text-center max-w-sm mx-4">
             <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Pause className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-primary mb-2">Game Paused</h2>
+            <h2 className="mb-2 text-xl font-semibold text-primary">Game Paused</h2>
             <p className="text-muted-foreground mb-6">
               Take a break! Click below when you're ready to
               continue.
