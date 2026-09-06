@@ -54,7 +54,7 @@ export function UsernamePromptDialog({ open, onSave, validateUsername }: Usernam
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
-        className="max-w-sm [&>button]:hidden"
+        className="sm:max-w-sm [&>button]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
