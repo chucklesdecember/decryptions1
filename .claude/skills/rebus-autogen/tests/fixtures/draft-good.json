@@ -1,0 +1,83 @@
+{
+  "id": "2026-09-30-us-reduces-troops-in-germany",
+  "headline": "US Reduces Troops in Germany",
+  "date": "September 30, 2026",
+  "category": "World News",
+  "words": [
+    {
+      "answer": "US",
+      "derivations": "(YOUTUBE - TUBE) ~U + S",
+      "clues": [
+        { "type": "operator", "content": "(" },
+        { "type": "image", "content": "/youtube.png", "alt": "YouTube logo", "word": "YOUTUBE", "device": "logo" },
+        { "type": "operator", "content": " - " },
+        { "type": "image", "content": "/tube.png", "alt": "Tube", "word": "TUBE" },
+        { "type": "operator", "content": ") + " },
+        { "type": "text", "content": "S" }
+      ]
+    },
+    {
+      "answer": "REDUCES",
+      "derivations": "(TREE - TEA) ~RE + (DUCK - K) + ES",
+      "clues": [
+        { "type": "operator", "content": "(" },
+        { "type": "image", "content": "/tree.png", "alt": "Tree", "word": "TREE" },
+        { "type": "operator", "content": " - " },
+        { "type": "image", "content": "/tea.png", "alt": "Tea", "word": "TEA" },
+        { "type": "operator", "content": ") + (" },
+        { "type": "image", "content": "/duck.png", "alt": "Duck", "word": "DUCK" },
+        { "type": "operator", "content": " - " },
+        { "type": "image", "content": "/k-cursive.png", "alt": "Cursive letter K", "word": "K", "device": "cursive" },
+        { "type": "operator", "content": ") + " },
+        { "type": "text", "content": "es" }
+      ]
+    },
+    {
+      "answer": "TROOPS",
+      "derivations": "(TROUT - OUT) + (ZOO - Z) + (UPS - U)",
+      "clues": [
+        { "type": "operator", "content": "(" },
+        { "type": "image", "content": "/trout.png", "alt": "Trout", "word": "TROUT" },
+        { "type": "operator", "content": " - " },
+        { "type": "image", "content": "/out.png", "alt": "Umpire calling out", "word": "OUT" },
+        { "type": "operator", "content": ") + (" },
+        { "type": "image", "content": "/zoo.png", "alt": "Zoo entrance", "word": "ZOO" },
+        { "type": "operator", "content": " - " },
+        { "type": "text", "content": "Z" },
+        { "type": "operator", "content": ") + (" },
+        { "type": "image", "content": "/ups.png", "alt": "UPS shield logo", "word": "UPS", "device": "logo" },
+        { "type": "operator", "content": " - " },
+        { "type": "text", "content": "U" },
+        { "type": "operator", "content": ")" }
+      ]
+    },
+    {
+      "answer": "IN",
+      "derivations": "(CABIN - CAB)",
+      "clues": [
+        { "type": "operator", "content": "(" },
+        { "type": "image", "content": "/cabin.png", "alt": "Log cabin", "word": "CABIN" },
+        { "type": "operator", "content": " - " },
+        { "type": "image", "content": "/cab.png", "alt": "Taxi cab", "word": "CAB" },
+        { "type": "operator", "content": ")" }
+      ]
+    },
+    {
+      "answer": "GERMANY",
+      "derivations": "GERMANY",
+      "clues": [
+        { "type": "image", "content": "/germany-outline.png", "alt": "Germany", "word": "GERMANY", "device": "outline" }
+      ]
+    }
+  ],
+  "hints": [
+    "Video platform minus tube + one letter",
+    "Tree without tea sound + duck without fancy K + two letters",
+    "Fish without out + animal park without Z + delivery company without fancy U",
+    "Cabin minus taxi",
+    "European country"
+  ],
+  "meta": {
+    "note": "The May 3, 2026 puzzle re-expressed as a draft, re-dated so it does not collide with the live entry."
+  }
+}
