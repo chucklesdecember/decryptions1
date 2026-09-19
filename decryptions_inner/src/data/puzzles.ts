@@ -22,6 +22,73 @@ export interface Puzzle {
 
 export const puzzles: Puzzle[] = [
   {
+    id: "2026-09-15-court-blocks-mail-ballot-limits",
+    headline: "Court Blocks Mail Ballot Limits",
+    date: "September 15, 2026",
+    category: "U.S. News",
+    words: [
+      {
+        answer: "COURT",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/coat.webp", alt: "Coat" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "@" },
+          { type: "operator", content: ") + (" },
+          { type: "image", content: "/yogurt.jpg", alt: "Yogurt" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "YOG" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "BLOCKS",
+        clues: [
+          { type: "image", content: "/bee.webp", alt: "Bee" },
+          { type: "operator", content: " + " },
+          { type: "image", content: "/locks.png", alt: "Locks of hair" },
+        ],
+      },
+      {
+        answer: "MAIL",
+        clues: [
+          { type: "text", content: "MIKE" },
+          { type: "operator", content: " + (" },
+          { type: "image", content: "/nail.webp", alt: "Nail" },
+          { type: "operator", content: " - " },
+          { type: "text", content: "NOVEMBER" },
+          { type: "operator", content: ")" },
+        ],
+      },
+      {
+        answer: "BALLOT",
+        clues: [
+          { type: "operator", content: "(" },
+          { type: "image", content: "/ballet.png", alt: "Ballet" },
+          { type: "operator", content: " - " },
+          { type: "image", content: "/et-outline.jpg", alt: "E.T. outline" },
+          { type: "operator", content: ") + " },
+          { type: "text", content: "OT" },
+        ],
+      },
+      {
+        answer: "LIMITS",
+        clues: [
+          { type: "image", content: "/lithium.png", alt: "Lithium on periodic table" },
+          { type: "operator", content: " + " },
+          { type: "image", content: "/mitts.webp", alt: "Oven mitts" },
+        ],
+      },
+    ],
+    hints: [
+      "(Outerwear - 'at') + (dairy snack - yog)",
+      "Buzzing insect + locks of hair",
+      "NATO M + (hammer target - NATO N)",
+      "(Dance style - E.T.) + OT",
+      "Lithium symbol + oven mitts",
+    ],
+  },
+  {
     id: "2026-05-03-us-reduces-troops-in-germany",
     headline: "US Reduces Troops in Germany",
     date: "May 3, 2026",
