@@ -1,30 +1,32 @@
+# Decryptions
 
-  # Rebus Puzzle News Game
+React/Vite rebus game with Supabase Auth and a server-authoritative Supabase Postgres backend. Vercel serves the frontend; no separate API server or database is deployed.
 
-  This is a code bundle for Rebus Puzzle News Game. The original project is available at https://www.figma.com/design/T1RkrH6NMY7ZpqWfhLWGYR/Rebus-Puzzle-News-Game.
+## Local setup
 
-  ## Running the code
+Use Node 22+ and run these commands from `decryptions_inner`:
 
-  Run `npm i` to install the dependencies.
+```sh
+npm ci
+cp .env.example .env
+npm run dev
+```
 
-  Copy `.env.example` to `.env` and fill in the Supabase keys (see below). Without them the game
-  still runs, but accounts and the leaderboard are disabled.
+Set the public Supabase URL and anon/publishable key in `.env`. Gameplay requires a configured, migrated Supabase project and a signed-in account. When the backend is unavailable, the app does not fall back to local scoring.
 
-  Run `npm run dev` to start the development server.
+Follow [Supabase setup and deployment](supabase/README.md) before enabling play. New puzzle data must stay outside the public repository; only the server returns clues, validates words, and releases results.
 
-  ## Accounts, progress sync and leaderboard
+## Checks
 
-  Players log in with email + password (Supabase Auth). Their username is public on the
-  leaderboard; their email stays private. Solved puzzles are saved to the account and synced to
-  every device they log in on, and times are posted to the leaderboard automatically.
+```sh
+npm run typecheck
+npm test
+npm run build
+npm run check:bundle
+npx playwright install chromium
+npm run test:browser
+```
 
-  Environment variables (`.env` locally, Project Settings → Environment Variables on Vercel):
+`npm test` creates an isolated temporary PostgreSQL database, applies the actual SQL migrations, and tests database roles and concurrent connections. The optional `embedded-postgres` platform package must be installed (do not use `--omit=optional`); allow its installation scripts so its bundled binaries work. It is a development dependency only, and never replaces Supabase in production. Tests bind to localhost, delete the temporary database on exit, and never read production credentials.
 
-  | Variable | Purpose |
-  |---|---|
-  | `VITE_SUPABASE_URL` | Supabase project URL |
-  | `VITE_SUPABASE_ANON_KEY` | Supabase anon (public) key |
-  | `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key for the login form (optional; widget hidden when empty) |
-  | `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` | Optional analytics |
-
-  One-time Supabase setup (SQL migration + dashboard settings): see [`supabase/README.md`](./supabase/README.md).
+Browser tests use the same database behind a test-only Supabase HTTP/Auth adapter. JWT verification, hosted project grants, email delivery, and Turnstile still need the live staging checks documented in the setup guide. Playwright uses installed Chrome on macOS, or its downloaded Chromium elsewhere; `PLAYWRIGHT_CHANNEL` overrides that choice.

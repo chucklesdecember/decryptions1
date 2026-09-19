@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Lightbulb } from 'lucide-react';
@@ -99,13 +99,15 @@ function ClueToken({ clue }: { clue: PuzzleClue }) {
 
 interface PuzzleBoxProps {
   clues: PuzzleClue[];
-  answer: string;
+  answerLength: number;
+  label: string;
+  incorrect?: boolean;
   userInput: string;
   onInputChange: (value: string) => void;
   isCorrect: boolean;
   isPaused?: boolean;
-  hint: string;
-  onRevealHint: () => void;
+  hint: string | null;
+  onRevealHint: () => Promise<void>;
   /** Read-only: puzzle already completed (answers shown) */
   locked?: boolean;
   /** Not playable yet (e.g. log in required); answers stay hidden */
@@ -116,7 +118,9 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
   (
     {
       clues,
-      answer,
+      answerLength,
+      label,
+      incorrect,
       userInput,
       onInputChange,
       isCorrect,
@@ -129,6 +133,15 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
     ref,
   ) => {
     const groups = groupClues(clues);
+    const [hintError, setHintError] = useState<string | null>(null);
+    const [hintLoading, setHintLoading] = useState(false);
+    const loadHint = async () => {
+      if (hint != null || hintLoading) return;
+      setHintLoading(true); setHintError(null);
+      try { await onRevealHint(); }
+      catch (err) { setHintError(err instanceof Error ? err.message : 'Could not load hint. Retry.'); }
+      finally { setHintLoading(false); }
+    };
 
     return (
       <div className="flex min-w-0 w-full flex-col gap-2">
@@ -140,7 +153,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   variant="outline"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={onRevealHint}
+                  onClick={() => void loadHint()}
                   disabled={locked || inputsDisabled}
                   type="button"
                   aria-label="Show hint"
@@ -153,15 +166,16 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   <DialogTitle>Hint</DialogTitle>
                 </DialogHeader>
                 <div className="rounded-lg bg-accent p-3">
-                  <p className="text-sm">{hint}</p>
+                  <p className="text-sm">{hint ?? (hintLoading ? 'Loading hint…' : hintError ?? 'Loading hint…')}</p>
+                  {hintError && hint == null && <Button variant="outline" onClick={() => void loadHint()}>Retry hint</Button>}
                 </div>
               </DialogContent>
             </Dialog>
             <span
               className="min-w-6 text-center text-xs font-semibold tabular-nums leading-none text-muted-foreground"
-              aria-label={`Answer length: ${answer.length} letters`}
+              aria-label={`Answer length: ${answerLength} letters`}
             >
-              {answer.length}
+              {answerLength}
             </span>
           </div>
 
@@ -183,13 +197,16 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
         <Input
           ref={ref}
           type="text"
+          aria-label={label}
+          autoComplete="off"
+          maxLength={128}
           value={userInput}
           onChange={(e) => onInputChange(e.target.value.toUpperCase())}
           placeholder="Type your answer..."
           className={`h-9 rounded-lg border-2 text-center uppercase transition-all placeholder:normal-case ${
             isCorrect
               ? 'bg-green-50 border-green-500 text-green-700 shadow-sm'
-              : userInput && !isCorrect && userInput.length === answer.length
+              : incorrect
               ? 'bg-red-50 border-red-500 text-red-700'
               : 'bg-white border-border hover:border-primary/50 focus:border-primary'
           }`}

@@ -22,13 +22,14 @@ interface ShareDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   solveTime: number;
+  verified: boolean;
   hintsUsed: number;
   /** Daily puzzle date label, e.g. "April 14, 2026" */
   puzzleDate: string;
   puzzleId: string;
   /** When set, shown as the right-hand action instead of Copy. */
   articleUrl?: string;
-  /** Player's row in `solves` after submit (localStorage); used to slice the leaderboard */
+  /** Server-confirmed leaderboard row; used to slice the leaderboard */
   playerRowId: string | null;
   onLeaderboard?: () => void;
 }
@@ -65,6 +66,7 @@ export function ShareDialog({
   isOpen,
   onOpenChange,
   solveTime,
+  verified,
   hintsUsed,
   puzzleDate,
   puzzleId,
@@ -81,7 +83,7 @@ export function ShareDialog({
   } | null>(null);
 
   const dateStr = formatShortDate(puzzleDate);
-  const copyableText = buildCopyableShareText(dateStr, solveTime, hintsUsed);
+  const copyableText = buildCopyableShareText(dateStr, solveTime, hintsUsed) + (verified ? "" : "\nUnverified legacy score");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -96,7 +98,7 @@ export function ShareDialog({
 
     setPlacementLoading(true);
     void (async () => {
-      const entries = await fetchLeaderboardEntries(puzzleId);
+      const entries = await fetchLeaderboardEntries(puzzleId).catch(() => []);
       if (cancelled) return;
       const sliced = sliceAroundPlayer(entries, playerRowId);
       if (sliced && sliced.slice.length > 0) {
@@ -170,6 +172,7 @@ export function ShareDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
+          {!verified && <p className="text-center text-sm text-amber-800">Unverified legacy score</p>}
           <div className="bg-accent p-4 rounded-lg space-y-2">
             <p className="text-center">
               <span className="text-2xl">⏱️</span>
@@ -197,13 +200,13 @@ export function ShareDialog({
 
           {!placementLoading && !placement && playerRowId && (
             <p className="text-center text-sm text-muted-foreground">
-              Leaderboard placement will appear here once your score syncs.
+              Your score is saved. Placement is unavailable or outside the top 100.
             </p>
           )}
 
           {!placementLoading && !placement && !playerRowId && (
             <p className="text-center text-sm text-muted-foreground">
-              Submit your time on the leaderboard to see how you rank.
+              This legacy completion has no leaderboard entry.
             </p>
           )}
 

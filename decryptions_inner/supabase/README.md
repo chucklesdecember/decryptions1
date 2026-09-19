@@ -1,71 +1,79 @@
-# Supabase setup for accounts
+# Supabase backend and deployment
 
-The app uses Supabase Auth (email + password). A player's **username** is public on the
-leaderboard; their **email** lives in a private `profiles` table that only they can read. Solved puzzles are stored in `progress` and synced to every device they log in on.
+Supabase provides **Postgres, Auth, and the Data API**. The browser calls Postgres functions through `supabase.rpc()` with its Auth session. There is no separate production Node server, custom JWT issuer, or extra database. Only public Supabase configuration belongs in Vite/Vercel environment variables.
 
-Do these steps once, in order.
+## Deploy in order
 
-## 1. Run the migration
+This change builds on account PR #5. Test in a separate Supabase staging project first. Take a database backup before the production cutover. Do not reopen gameplay between the migration and the private content import: old clients will lose score-write access as soon as the backend migration runs.
 
-Dashboard → **SQL Editor** → paste and run [`2026-09-05-accounts.sql`](./2026-09-05-accounts.sql).
-It is safe to run more than once. (The older `add-hints-used-column.sql` has already been applied.)
+1. For an empty project, apply `000-initial-solves.sql`. Existing projects already have this table. Apply `add-hints-used-column.sql` if the column is missing.
+2. Apply `2026-09-05-accounts.sql` if the account migration has not been applied.
+3. Apply `2026-09-06-authoritative-game.sql` using the Supabase SQL Editor or your migration runner. This migration is transactional and repeatable; it removes all old `solves`/`progress` policies, revokes direct client table access, and removes `claim_solves`. **Do not rerun the older accounts migration afterward.**
+4. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
+5. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
+6. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
 
-## 2. Remove the old anonymous insert policy on `solves`
+Rollback: retain the database restrictions and take the game offline while correcting the frontend or migration. Restoring the old frontend alone cannot submit scores. Do not restore permissive grants/policies as a workaround.
 
-Dashboard → **Database → Policies → `solves`**. Delete any policy that lets `anon` / `public`
-**INSERT** rows. Keep (or add) a SELECT policy for everyone; the migration created
-`solves: public read` and `solves: insert own`.
+## Private puzzle import
 
-## 3. Email settings
+For the **12 already-public historical puzzles only**, including September 15, 2026, generate an ignored local seed from the pinned historical revision on main:
 
-Dashboard → **Authentication → Sign In / Providers → Email**:
+```sh
+npm run export:legacy
+```
 
-- **Turn off "Confirm email".** Supabase's built-in mailer only sends **2 emails per hour**, so
-  with confirmation on, sign-ups stall after the second player. Sign-up then logs the player
-  in immediately.
-- Set **Minimum password length** to 8 (the app enforces 8 too).
+It writes `private/puzzles.json` with file permissions `0600` and refuses to overwrite it. The exporter exists only to migrate already-published content. Git history and old deployed assets still contain those historical answers; removing the current source does not erase them. Retire old previews/assets where practical. Do not commit future answers or SQL literals containing them to this public repository.
 
-Optional, later: configure a custom SMTP provider (Dashboard → Project Settings →
-Authentication → SMTP; e.g. Resend's free tier) and turn confirmation back on. Password-reset
-emails also use this mailer, so until then only a couple of resets per hour will go out.
+Author future puzzles directly in private JSON outside Git. Each entry has a unique opaque UUID `id`, ISO `date`, `category`, `headline`, optional HTTP(S) `articleUrl`, `words` containing `answer` and `clues`, and one hint string per word. Clues contain `type` (`image`, `text`, `symbol`, `operator`), `content`, and optional `alt`. For image clues, `content` is a local asset path or HTTP(S) URL. Public clue assets should use neutral names and contain only the intended clues. Each puzzle contains 1–30 words; each answer contains 1–128 characters. Do not add solution-bearing metadata to clues.
 
-## 4. URLs (needed for password-reset links)
+Store the **Supabase database connection string** in a private environment file outside the repository, or an ignored `private/import.env` with permissions `0600`:
 
-Dashboard → **Authentication → URL Configuration**:
+```text
+PUZZLE_DATABASE_URL=postgresql://...supabase-database-connection...
+```
 
-- Site URL: `https://decryptions1.vercel.app`
-- Redirect URLs: add `http://localhost:3000` and your Vercel preview domain pattern
-  (e.g. `https://*-chucklesdecember.vercel.app`).
+Then import (Node 22+):
 
-## 5. Cloudflare Turnstile (bot protection on the login form)
+```sh
+node --env-file=private/import.env scripts/import-puzzles.mjs private/puzzles.json
+```
 
-1. In Cloudflare → **Turnstile** → Add widget. Hostnames: `decryptions1.vercel.app` and
-   `localhost`. Widget mode: Managed (or Invisible).
-2. Copy the **Site key** into the app's environment as `VITE_TURNSTILE_SITE_KEY`
-   (Vercel → Project → Settings → Environment Variables, and your local `.env`).
-3. Copy the **Secret key** into Dashboard → **Authentication → Attack Protection →
-   Enable CAPTCHA protection** → provider **Turnstile**.
+Use the connection string from Supabase's Connect dialog: direct Postgres or the session pooler, with its TLS settings. This is an administrative tool; it uses the database connection, not the anon key or a browser-exposed service key. Never pass the password in command arguments. It imports all entries in one transaction, rejects invalid input, and rejects content changes after any attempt or completion. Maintain stable UUIDs when reimporting. The optional `legacyId` is only for historical migration; its mapping lives in a private table.
 
-Until both halves are configured the app simply hides the widget and Supabase does not
-require a token. Once the secret is saved in Supabase, sign-ups without a site key in the
-app will fail, so do steps 2 and 3 together.
+The importer preserves old scores, timestamps, hints, names, and ownership, replacing legacy puzzle slugs with UUIDs. Account-linked leaderboard rows become the retained completion if old progress disagrees. Cloud-only progress stays completed without gaining a leaderboard row. Anonymous rows stay ranked but cannot be claimed. Unmapped historical rows remain stored and inaccessible through the RPCs until their puzzle is imported. Identity conflicts abort the entire import; resolve them from the backup rather than deleting scores silently.
 
-## 6. Rate limits (optional hardening)
+## RPC contract and security
 
-Dashboard → **Authentication → Rate Limits**. Defaults are fine for launch; if sign-up spam
-appears, lower "Rate limit for sign ups and sign ins" (per IP, per 5 minutes).
-
-## 7. Redeploy
-
-Add `VITE_TURNSTILE_SITE_KEY` in Vercel, then redeploy so the new build picks it up.
-
-## What the tables mean
-
-| Table | Who can read | Purpose |
+| Function | Access | Behavior |
 |---|---|---|
-| `profiles` | owner only | `username` (public via leaderboard), `email` (private) |
-| `progress` | owner only | one row per solved puzzle per account: time, hints, leaderboard row id |
-| `solves` | everyone | leaderboard rows; `user_id` links them to an account, `display_name` is stamped from the profile by a trigger |
+| `list_puzzles()` | Public | Published UUIDs, dates, categories only; newest first |
+| `get_leaderboard(p_puzzle_id uuid)` | Public | Top 100: time, hints, timestamp, then row UUID; old scores labeled `verified: false`; no account IDs |
+| `start_puzzle(p_puzzle_id uuid)` | Signed in | Create/resume the one account attempt before returning clues and lengths; completed accounts receive their saved result |
+| `submit_word(p_puzzle_id uuid, p_word_index integer, p_guess text)` | Signed in | Zero-based word index, case-insensitive exact match; final accepted word atomically writes score and progress |
+| `reveal_hint(p_puzzle_id uuid, p_word_index integer)` | Signed in | Record each hint once, then return its text |
+| `get_my_progress()` | Signed in | Read only the caller's completed, published puzzles |
 
-RPC functions: `username_status(name)` (availability check before sign-up) and
-`claim_solves(ids)` (attaches a device's pre-account leaderboard rows to the new account).
+`start_puzzle` and `reveal_hint` return `GameState`; submissions return `{ state, correct }` or `{ retryAfterSeconds }`. Word responses reveal only already-accepted answers and already-revealed hints. Headline and article URL appear only in completed results. There is no API accepting a score, owner, completion timestamp, or hint count.
+
+The database derives ownership from `auth.uid()`, serializes changes with row locks, and enforces unique account/puzzle keys. Time is whole elapsed seconds measured by the database. It keeps running through hidden puzzles, navigation, sign-out, and disconnection. There is no attempt-reset endpoint. Sixty word checks per account per fixed one-minute window are shared across all puzzles; hints and resume still work when checks are limited. Client storage is an optional account cache and is never imported as evidence of a solve.
+
+Legacy scores remain ranked and unverified, including potentially forged historical times. One account can finish each puzzle once; the system does not prevent multiple accounts or outside assistance.
+
+## Account settings
+
+Retain PR #5's email/password accounts, username profiles, and password reset flow. Configure the Supabase Site URL and allowed redirect URLs for your production, staging, and local origins. Minimum password length is eight characters. Choose email confirmation and SMTP settings appropriate to your project; verify actual email delivery on staging.
+
+For Turnstile, set the public `VITE_TURNSTILE_SITE_KEY` in Vercel and the corresponding secret in Supabase Authentication's CAPTCHA/attack-protection settings. Configure both together and include the correct widget hostnames. Auth form tokens reset after attempts and tab switches.
+
+## Staging acceptance
+
+Use the real Supabase anon key and two real accounts, in separate browser profiles:
+
+- A signed-out visitor can see dates and rankings, but cannot start, check words, obtain hints, read private tables, or read/write `solves`/`progress` directly. Verify old clients and `claim_solves` fail as well.
+- Start before clues arrive; confirm start/resume timestamps do not reset on reload, navigation, hide/show, or another device. A forged localStorage completion and altered browser clock cannot produce a saved score.
+- Check a wrong and correct word, retry a repeated hint, and finish from simultaneous tabs. Confirm one verified leaderboard row and one completion with database-calculated time. Network failure after completion must recover the same row.
+- Account A's accepted words, hints, and results must not appear for account B, including when switching accounts while requests are in flight. Invalid/expired JWTs must be rejected by Supabase's gateway.
+- Both daily and archive play use the same flow. Future puzzles are absent. Unsolved payloads and built assets contain no answers, headlines, article links, unrevealed hints, or legacy slugs.
+- Imported anonymous scores remain ranked/unclaimable. Account-linked legacy solves stay completed with original times and an Unverified label; cloud-only completions do not gain scores.
+- Verify sign-up, email confirmation if enabled, login, password reset, CAPTCHA retries, progress reload, and sign-out against hosted Auth.
