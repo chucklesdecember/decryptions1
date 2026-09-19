@@ -106,8 +106,10 @@ interface PuzzleBoxProps {
   isPaused?: boolean;
   hint: string;
   onRevealHint: () => void;
-  /** Read-only: puzzle already completed on this device */
+  /** Read-only: puzzle already completed (answers shown) */
   locked?: boolean;
+  /** Not playable yet (e.g. log in required); answers stay hidden */
+  inputsDisabled?: boolean;
 }
 
 export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
@@ -122,6 +124,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
       hint,
       onRevealHint,
       locked = false,
+      inputsDisabled = false,
     },
     ref,
   ) => {
@@ -138,7 +141,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
                   size="icon"
                   className="h-7 w-7"
                   onClick={onRevealHint}
-                  disabled={locked}
+                  disabled={locked || inputsDisabled}
                   type="button"
                   aria-label="Show hint"
                 >
@@ -190,7 +193,7 @@ export const PuzzleBox = forwardRef<HTMLInputElement, PuzzleBoxProps>(
               ? 'bg-red-50 border-red-500 text-red-700'
               : 'bg-white border-border hover:border-primary/50 focus:border-primary'
           }`}
-          disabled={isCorrect || isPaused || locked}
+          disabled={isCorrect || isPaused || locked || inputsDisabled}
           readOnly={locked}
         />
       </div>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "./ui/button";
 import { getCurrentPuzzle } from "../data/puzzles";
 import { Archive } from "lucide-react";
+import { AccountMenu } from "./AccountMenu";
 
 interface LandingPageProps {
   onStartGame: () => void;
@@ -15,9 +16,14 @@ export function LandingPage({ onStartGame, onOpenArchive }: LandingPageProps) {
   return (
     // min-h (not h) so short / landscape phones scroll instead of clipping the logo off the top.
     <div
-      className="relative isolate flex min-h-app w-full flex-col items-center justify-center bg-amber-50 px-4 py-8"
+      className="relative isolate flex min-h-app w-full flex-col items-center justify-center bg-amber-50 px-4 pb-8 pt-16"
       style={{ backgroundColor: "#fffbea" }}
     >
+      {/* Account: log in / sign up, or the signed-in username menu */}
+      <div className="absolute right-4 top-4 z-20">
+        <AccountMenu className="bg-white/80" />
+      </div>
+
       <div className="relative z-0 flex w-full max-w-sm flex-col items-center text-center">
         {/* Logo */}
         <div className="mb-6">

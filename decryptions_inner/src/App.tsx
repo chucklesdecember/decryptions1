@@ -7,41 +7,45 @@ import { LandingPage } from "./components/LandingPage";
 import { ArchiveDetail, ArchiveList } from "./components/ArchiveView";
 import { Leaderboard } from "./components/Leaderboard";
 import { LeaderboardPlacementPreview } from "./components/LeaderboardPlacementPreview";
-import { UsernamePromptDialog } from "./components/UsernamePromptDialog";
+import { AccountMenu } from "./components/AccountMenu";
 import { Button } from "./components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./components/ui/alert-dialog";
 import { Archive, Pause, Play, Trophy } from "lucide-react";
-import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { currentPuzzle, type Puzzle } from "./data/puzzles";
 import {
-  getStoredUsername,
-  setStoredUsername,
   isPuzzleSolvedLocally,
   getStoredSolveSeconds,
   getStoredSolveHints,
-  markPuzzleSolvedLocally,
   hasLeaderboardSubmittedLocally,
-  markLeaderboardSubmittedLocally,
   getStoredLeaderboardRowId,
-  setStoredLeaderboardRowId,
 } from "./lib/decryptionsStorage";
 import {
   fetchLeaderboardEntries,
-  isDisplayNameTakenByAnother,
-  submitLeaderboardScore,
   sliceAroundPlayer,
   type SolveEntry,
 } from "./lib/leaderboardApi";
-import { supabase } from "./lib/supabase";
+import { useAuth, type AuthKind } from "./lib/auth";
 import posthog from "posthog-js";
 
 type AppScreen = "landing" | "game" | "archive-list" | "archive-detail";
 
 export default function App() {
+  const auth = useAuth();
+  const { recordSolve, requireAuth } = auth;
+
   const [screen, setScreen] = useState<AppScreen>("landing");
   const [archiveBackTarget, setArchiveBackTarget] = useState<"landing" | "game">("landing");
   const [archiveSelectedPuzzle, setArchiveSelectedPuzzle] = useState<Puzzle | null>(null);
-  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
   const [isPuzzleComplete, setIsPuzzleComplete] = useState(false);
@@ -49,10 +53,13 @@ export default function App() {
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showLeaderboardView, setShowLeaderboardView] = useState(false);
-  const [alreadySolvedOnDevice, setAlreadySolvedOnDevice] = useState(false);
-  /** After first-time username save: wait until instructions close, then call `beginGameSession`. */
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  /** Player pressed Play while the session or progress sync was still loading. */
+  const [startWhenReady, setStartWhenReady] = useState(false);
+  /** Today's puzzle was already solved (on this device or, via sync, on another). */
+  const [alreadySolved, setAlreadySolved] = useState(false);
+  /** After a brand-new account is created: wait until instructions close, then call `beginGameSession`. */
   const pendingFirstStartAfterInstructionsRef = useRef(false);
-  const leaderboardSubmitLockRef = useRef(false);
   /** Prevents duplicate onComplete / double leaderboard submit in React Strict Mode. */
   const puzzleCompleteOnceRef = useRef(false);
 
@@ -61,7 +68,6 @@ export default function App() {
     slice: SolveEntry[];
     highlightIndex: number;
   } | null>(null);
-  const [showPostSolveUsernamePrompt, setShowPostSolveUsernamePrompt] = useState(false);
 
   const solveTimeRef = useRef(0);
   const hintsUsedRef = useRef(0);
@@ -76,6 +82,7 @@ export default function App() {
     screen === "game" &&
     !isPaused &&
     !isInstructionsOpen &&
+    !showLeaveConfirm &&
     !isPuzzleComplete;
 
   const openArchive = useCallback((from: "landing" | "game") => {
@@ -94,11 +101,6 @@ export default function App() {
     setScreen(archiveBackTarget);
   }, [archiveBackTarget]);
 
-  const validateUsername = useCallback(async (username: string): Promise<string | null> => {
-    const taken = await isDisplayNameTakenByAnother(username.trim());
-    return taken ? "That username is already taken. Try another." : null;
-  }, []);
-
   const runPlacementPreview = useCallback(async (rowId: string) => {
     const entries = await fetchLeaderboardEntries(currentPuzzle.id);
     const sliced = sliceAroundPlayer(entries, rowId);
@@ -109,93 +111,17 @@ export default function App() {
         rank: sliced.rank,
       });
     }
-  }, [currentPuzzle.id]);
+  }, []);
 
-  const submitLeaderboardAfterSolve = useCallback(async () => {
-    if (!supabase) return;
-    const puzzleId = currentPuzzle.id;
-    if (hasLeaderboardSubmittedLocally(puzzleId)) {
-      const rid = getStoredLeaderboardRowId(puzzleId);
-      if (rid) await runPlacementPreview(rid);
-      return;
-    }
-    if (leaderboardSubmitLockRef.current) return;
-    const name = getStoredUsername()?.trim();
-    if (!name) {
-      setShowPostSolveUsernamePrompt(true);
-      return;
-    }
-    if (await isDisplayNameTakenByAnother(name)) {
-      setShowPostSolveUsernamePrompt(true);
-      return;
-    }
-    leaderboardSubmitLockRef.current = true;
-    const res = await submitLeaderboardScore({
-      puzzleId,
-      displayName: name,
-      timeSeconds: solveTimeRef.current,
-      hintsUsed: hintsUsedRef.current,
-    });
-    if (res.ok) {
-      markLeaderboardSubmittedLocally(puzzleId);
-      setStoredLeaderboardRowId(puzzleId, res.id);
-      posthog.capture("leaderboard_auto_submitted", { puzzle_id: puzzleId });
-      await runPlacementPreview(res.id);
-    } else if (res.error === "duplicate") {
-      setShowPostSolveUsernamePrompt(true);
-      toast.error("That username is already taken. Choose another.");
-    }
-    leaderboardSubmitLockRef.current = false;
-  }, [currentPuzzle.id, runPlacementPreview]);
-
-  const handlePostSolveUsernameSave = useCallback(
-    (username: string) => {
-      setStoredUsername(username);
-      setShowPostSolveUsernamePrompt(false);
-      void (async () => {
-        if (!supabase) return;
-        const puzzleId = currentPuzzle.id;
-        if (hasLeaderboardSubmittedLocally(puzzleId)) return;
-        if (leaderboardSubmitLockRef.current) return;
-        leaderboardSubmitLockRef.current = true;
-        const res = await submitLeaderboardScore({
-          puzzleId,
-          displayName: username.trim(),
-          timeSeconds: solveTimeRef.current,
-          hintsUsed: hintsUsedRef.current,
-        });
-        if (res.ok) {
-          markLeaderboardSubmittedLocally(puzzleId);
-          setStoredLeaderboardRowId(puzzleId, res.id);
-          posthog.capture("leaderboard_auto_submitted", {
-            puzzle_id: puzzleId,
-            source: "post_solve_username",
-          });
-          await runPlacementPreview(res.id);
-        } else if (res.error === "duplicate") {
-          toast.error("That username is already taken. Choose another.");
-          setShowPostSolveUsernamePrompt(true);
-        }
-        leaderboardSubmitLockRef.current = false;
-      })();
-    },
-    [currentPuzzle.id, runPlacementPreview],
-  );
-
+  // Returning to an already-solved puzzle: show where the player placed.
   useEffect(() => {
-    if (screen !== "game" || !isPuzzleComplete || !alreadySolvedOnDevice) return;
+    if (screen !== "game" || !isPuzzleComplete || !alreadySolved) return;
     const pid = currentPuzzle.id;
     if (!hasLeaderboardSubmittedLocally(pid)) return;
     const rid = getStoredLeaderboardRowId(pid);
     if (!rid) return;
     void runPlacementPreview(rid);
-  }, [
-    screen,
-    isPuzzleComplete,
-    alreadySolvedOnDevice,
-    currentPuzzle.id,
-    runPlacementPreview,
-  ]);
+  }, [screen, isPuzzleComplete, alreadySolved, runPlacementPreview]);
 
   const handlePuzzleComplete = useCallback(() => {
     if (puzzleCompleteOnceRef.current) return;
@@ -207,14 +133,14 @@ export default function App() {
       });
       setIsPuzzleComplete(true);
       setShowShareDialog(true);
-      markPuzzleSolvedLocally(
-        currentPuzzle.id,
-        solveTimeRef.current,
-        hintsUsedRef.current,
+      // Saves locally + to the account and posts to the leaderboard automatically.
+      void recordSolve(currentPuzzle.id, solveTimeRef.current, hintsUsedRef.current).then(
+        ({ rowId }) => {
+          if (rowId) void runPlacementPreview(rowId);
+        },
       );
-      void submitLeaderboardAfterSolve();
     }
-  }, [isPuzzleComplete, submitLeaderboardAfterSolve]);
+  }, [isPuzzleComplete, recordSolve, runPlacementPreview]);
 
   const handleUseHint = () => {
     setHintsUsed((prev) =>
@@ -230,13 +156,12 @@ export default function App() {
   const beginGameSession = useCallback(() => {
     posthog.capture("puzzle_started");
     setScreen("game");
-    setShowUsernamePrompt(false);
     setIsPaused(false);
     setIsInstructionsOpen(false);
     setShowShareDialog(false);
     setShowLeaderboardView(false);
+    setShowLeaveConfirm(false);
     setPlacementPreview(null);
-    setShowPostSolveUsernamePrompt(false);
     puzzleCompleteOnceRef.current = false;
 
     const id = currentPuzzle.id;
@@ -245,30 +170,59 @@ export default function App() {
       setIsPuzzleComplete(true);
       setSolveTime(getStoredSolveSeconds(id) ?? 0);
       setHintsUsed(getStoredSolveHints(id) ?? 0);
-      setAlreadySolvedOnDevice(true);
+      setAlreadySolved(true);
     } else {
       setIsPuzzleComplete(false);
       setSolveTime(0);
       setHintsUsed(0);
-      setAlreadySolvedOnDevice(false);
+      setAlreadySolved(false);
     }
   }, []);
 
+  /** Runs once login (and the progress sync) finished from the Play button. */
+  const afterAuth = useCallback(
+    (kind: AuthKind) => {
+      if (kind === "signup") {
+        // First-time players read the instructions, then the game starts (see handleInstructionsOpenChange).
+        pendingFirstStartAfterInstructionsRef.current = true;
+        setIsInstructionsOpen(true);
+      } else {
+        beginGameSession();
+      }
+    },
+    [beginGameSession],
+  );
+
   const handlePlayClick = () => {
     posthog.capture("play_clicked");
-    if (getStoredUsername()) {
+    if (auth.status === "unavailable") {
       beginGameSession();
-    } else {
-      setShowUsernamePrompt(true);
+      return;
     }
+    if (auth.status === "signed_in" && !auth.syncing) {
+      beginGameSession();
+      return;
+    }
+    if (auth.status === "signed_out") {
+      requireAuth(afterAuth);
+      return;
+    }
+    // Session still loading or progress still syncing: start as soon as it settles.
+    if (auth.syncing) toast("Syncing your progress…");
+    setStartWhenReady(true);
   };
 
-  const handleUsernameSave = (username: string) => {
-    setStoredUsername(username);
-    setShowUsernamePrompt(false);
-    pendingFirstStartAfterInstructionsRef.current = true;
-    setIsInstructionsOpen(true);
-  };
+  useEffect(() => {
+    if (!startWhenReady) return;
+    if (auth.status === "loading") return;
+    if (auth.status === "signed_in" && auth.syncing) return;
+    setStartWhenReady(false);
+    if (auth.status === "signed_in" || auth.status === "unavailable") {
+      beginGameSession();
+    } else {
+      requireAuth(afterAuth);
+    }
+  }, [startWhenReady, auth.status, auth.syncing, beginGameSession, requireAuth, afterAuth]);
 
   const handleInstructionsOpenChange = (open: boolean) => {
     setIsInstructionsOpen(open);
@@ -278,15 +232,26 @@ export default function App() {
     }
   };
 
+  const goHome = useCallback(() => {
+    setShowLeaveConfirm(false);
+    setIsPaused(false);
+    setScreen("landing");
+    posthog.capture("home_clicked", { from: "game", puzzle_complete: isPuzzleComplete });
+  }, [isPuzzleComplete]);
+
+  const handleGoHome = () => {
+    const inProgress = !isPuzzleComplete && (solveTime > 0 || hintsUsed > 0);
+    if (inProgress) {
+      setShowLeaveConfirm(true);
+    } else {
+      goHome();
+    }
+  };
+
   if (screen === "landing") {
     return (
       <>
         <LandingPage onStartGame={handlePlayClick} onOpenArchive={() => openArchive("landing")} />
-        <UsernamePromptDialog
-          open={showUsernamePrompt}
-          onSave={handleUsernameSave}
-          validateUsername={validateUsername}
-        />
         <InstructionsDialog
           open={isInstructionsOpen}
           onOpenChange={handleInstructionsOpenChange}
@@ -318,8 +283,17 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-4 py-2.5">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <div className="min-w-0">
+              {/* The title doubles as the home link */}
               <h1 className="whitespace-nowrap text-lg font-semibold leading-tight text-primary sm:text-xl">
-                Decryptions
+                <button
+                  type="button"
+                  onClick={handleGoHome}
+                  className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Decryptions home"
+                  title="Back to home"
+                >
+                  Decryptions
+                </button>
               </h1>
               {/* Tagline only where there is room; on phones the controls need the width. */}
               <p className="hidden text-xs text-muted-foreground sm:block">
@@ -327,6 +301,7 @@ export default function App() {
               </p>
             </div>
             <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+              <AccountMenu />
               <Button
                 type="button"
                 variant="outline"
@@ -434,7 +409,7 @@ export default function App() {
                   isPaused={isPaused}
                   hints={currentPuzzle.hints}
                   onUseHint={handleUseHint}
-                  interactionLocked={alreadySolvedOnDevice || isPuzzleComplete}
+                  interactionLocked={alreadySolved || isPuzzleComplete}
                 />
               </div>
 
@@ -474,13 +449,11 @@ export default function App() {
                 <div className="p-4 bg-white rounded-xl shadow-md text-center border-2 border-green-200 mb-4">
                   <p className="text-2xl mb-1">🎉</p>
                   <h3 className="mb-1 text-lg font-semibold text-green-700">
-                    {alreadySolvedOnDevice
-                      ? "Already completed on this device"
-                      : "Congratulations!"}
+                    {alreadySolved ? "Already completed" : "Congratulations!"}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {alreadySolvedOnDevice
-                      ? "You already solved this puzzle on this device. "
+                    {alreadySolved
+                      ? "You already solved this puzzle. "
                       : "You've decoded today's headline: "}
                     <span className="text-primary">
                       "{currentPuzzle.headline}"
@@ -517,6 +490,22 @@ export default function App() {
         </div>
       )}
 
+      {/* Leaving mid-puzzle resets the timer; confirm first */}
+      <AlertDialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this puzzle?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your timer and answers will reset. You can start again from the home screen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep playing</AlertDialogCancel>
+            <AlertDialogAction onClick={goHome}>Go home</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <ShareDialog
         isOpen={showShareDialog}
         onOpenChange={setShowShareDialog}
@@ -532,14 +521,6 @@ export default function App() {
           setShowLeaderboardView(true);
         }}
       />
-
-      <UsernamePromptDialog
-        open={showPostSolveUsernamePrompt}
-        onSave={handlePostSolveUsernameSave}
-        validateUsername={validateUsername}
-      />
-
-      <Toaster richColors position="top-center" />
     </div>
   );
 }

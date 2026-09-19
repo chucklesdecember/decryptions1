@@ -22,6 +22,8 @@ interface RebusPuzzleProps {
   onUseHint: () => void;
   /** When true, show solved answers read-only and do not fire onComplete */
   interactionLocked?: boolean;
+  /** Disable typing and hints without revealing answers (e.g. visitor must log in first). */
+  inputsDisabled?: boolean;
 }
 
 export function RebusPuzzle({
@@ -32,6 +34,7 @@ export function RebusPuzzle({
   hints,
   onUseHint,
   interactionLocked = false,
+  inputsDisabled = false,
 }: RebusPuzzleProps) {
   const [userInputs, setUserInputs] = useState<string[]>(() =>
     interactionLocked ? words.map((w) => w.answer.toUpperCase()) : words.map(() => ''),
@@ -64,7 +67,7 @@ export function RebusPuzzle({
   }, [completeOnAllWords, interactionLocked, correctAnswers, onComplete]);
 
   const handleInputChange = (index: number, value: string) => {
-    if (interactionLocked) return;
+    if (interactionLocked || inputsDisabled) return;
     const newInputs = [...userInputs];
     newInputs[index] = value;
     setUserInputs(newInputs);
@@ -104,7 +107,7 @@ export function RebusPuzzle({
             isPaused={isPaused}
             hint={hints[index]}
             onRevealHint={() => {
-              if (interactionLocked) return;
+              if (interactionLocked || inputsDisabled) return;
               if (!revealedHints[index]) {
                 const updated = [...revealedHints];
                 updated[index] = true;
@@ -113,6 +116,7 @@ export function RebusPuzzle({
               }
             }}
             locked={interactionLocked}
+            inputsDisabled={inputsDisabled}
           />
         </div>
       ))}
