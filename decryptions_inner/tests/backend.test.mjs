@@ -1,11 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { createDatabase, ids, puzzles, rpc, migration } from './database.mjs';
 import { importPuzzles, validatePuzzles } from '../scripts/import-puzzles.mjs';
 
 const denied = promise => assert.rejects(promise, error => error.code === '42501');
+test('legacy export preserves all published puzzles through September 15 without overwriting private data', async () => {
+  const privateRoot = fileURLToPath(new URL('../private/', import.meta.url));
+  await mkdir(privateRoot, { recursive: true });
+  const work = await mkdtemp(join(privateRoot, 'legacy-export-test-'));
+  const script = fileURLToPath(new URL('../scripts/export-legacy-puzzles.mjs', import.meta.url));
+  const run = promisify(execFile);
+  try {
+    await run(process.execPath, [script], { cwd: work });
+    const seed = join(work, 'private', 'puzzles.json');
+    const original = await readFile(seed, 'utf8');
+    const rows = JSON.parse(original);
+    validatePuzzles(rows);
+    assert.equal(rows.length, 12);
+    assert(rows.some(p => p.date === '2026-09-15' && p.legacyId === '2026-09-15-court-blocks-mail-ballot-limits'));
+    assert.equal((await stat(seed)).mode & 0o777, 0o600);
+    await assert.rejects(run(process.execPath, [script], { cwd: work }), /EEXIST/);
+    assert.equal(await readFile(seed, 'utf8'), original);
+  } finally { await rm(work, { recursive: true, force: true }); }
+});
+
 test('Supabase game SQL on PostgreSQL with separate authenticated connections', async t => {
   const db = await createDatabase();
   try {

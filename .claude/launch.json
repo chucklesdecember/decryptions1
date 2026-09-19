@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "decryptions-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "decryptions_inner", "run", "dev"],
+      "port": 3000
+    }
+  ]
+}

@@ -17,7 +17,7 @@ Rollback: retain the database restrictions and take the game offline while corre
 
 ## Private puzzle import
 
-For the **11 already-public historical puzzles only**, generate an ignored local seed from the pinned historical revision on main:
+For the **12 already-public historical puzzles only**, including September 15, 2026, generate an ignored local seed from the pinned historical revision on main:
 
 ```sh
 npm run export:legacy

@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { transpileModule } from 'typescript';
 
 const source = execFileSync('git', ['show',
-  'c1e293e38de02dc057006703f261c87978892a1a:decryptions_inner/src/data/puzzles.ts'], { encoding: 'utf8' });
+  '1bf31ad1215f6ee7e1e29fc8e5984325f68438ea:decryptions_inner/src/data/puzzles.ts'], { encoding: 'utf8' });
 const js = transpileModule(source, { compilerOptions: { module: 99, target: 99 } }).outputText;
 const { puzzles } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`);
 const rows = puzzles.map(p => ({
