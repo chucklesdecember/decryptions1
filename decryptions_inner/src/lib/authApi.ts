@@ -1,7 +1,7 @@
-import type { AuthError, Session, User } from "@supabase/supabase-js";
+import type { AuthError, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
-/** Row in `public.profiles`. email is private (owner-only RLS). */
+/** Row in `public.profiles`. Contact details are private (owner-only RLS). */
 export interface Profile {
   id: string;
   username: string;
@@ -10,128 +10,106 @@ export interface Profile {
 }
 
 export type UsernameStatus = "available" | "taken_account" | "taken_anonymous";
-
-/** How the current session was established from the auth dialog. */
 export type AuthKind = "signup" | "login";
 
 export const USERNAME_MIN = 2;
 export const USERNAME_MAX = 24;
-export const PASSWORD_MIN = 8;
 
-/** Turn a Supabase auth/database error into a sentence a player can act on. */
 export function mapAuthError(error: unknown): string {
   const raw =
     typeof error === "string"
       ? error
       : ((error as { message?: string } | null)?.message ?? "Something went wrong. Try again.");
-  const msg = raw.toLowerCase();
-  if (msg.includes("already registered") || msg.includes("already been registered")) {
+  const message = raw.toLowerCase();
+  if (
+    message.includes("already registered") ||
+    message.includes("already been registered") ||
+    message.includes("email address has already") ||
+    message.includes("email exists")
+  ) {
     return "An account with this email already exists. Log in instead.";
   }
-  if (msg.includes("invalid login credentials")) return "Wrong email or password.";
-  if (msg.includes("email not confirmed")) {
-    return "Confirm your email first: check your inbox for the link, then log in.";
-  }
-  if (msg.includes("database error saving new user")) {
+  if (message.includes("database error saving new user")) {
     return "That username was just taken. Try another.";
   }
-  if (msg.includes("captcha")) return "Bot check failed. Please try again.";
-  if (msg.includes("rate limit") || msg.includes("too many requests")) {
+  if (message.includes("anonymous sign-ins are disabled")) {
+    return "Account creation is not enabled yet. Please try again later.";
+  }
+  if (message.includes("captcha")) return "Bot check failed. Please try again.";
+  if (message.includes("rate limit") || message.includes("too many requests")) {
     return "Too many attempts. Wait a minute and try again.";
   }
-  if (msg.includes("password should be at least")) {
-    return `Password must be at least ${PASSWORD_MIN} characters.`;
-  }
-  if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("reach") || msg.includes("connect")) {
+  if (
+    message.includes("failed to fetch") ||
+    message.includes("network") ||
+    message.includes("reach") ||
+    message.includes("connect")
+  ) {
     return "The account service is currently unavailable. Please try again later.";
   }
   return raw;
 }
 
-/** Availability check via the `username_status` RPC (callable before an account exists). */
 export async function checkUsername(name: string): Promise<UsernameStatus> {
   if (!supabase) return "available";
   const { data, error } = await supabase.rpc("username_status", { p_name: name.trim() });
   if (error) {
     console.error("username_status error:", error);
-    // Fail open: the unique index on profiles still rejects a real collision at sign-up.
     return "available";
   }
   return (data as UsernameStatus) ?? "available";
 }
 
-export interface SignUpParams {
+interface PasswordlessParams {
   email: string;
-  password: string;
-  username: string;
   captchaToken?: string;
 }
 
-export type SignUpResult =
-  | { ok: true; user: User; session: Session | null }
-  | { ok: false; message: string };
-
-export async function signUp(params: SignUpParams): Promise<SignUpResult> {
+export async function sendLoginLink(
+  params: PasswordlessParams,
+): Promise<{ ok: true } | { ok: false; message: string }> {
   if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
-  const { data, error } = await supabase.auth.signUp({
+  const { error } = await supabase.auth.signInWithOtp({
     email: params.email.trim(),
-    password: params.password,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: `${window.location.origin}/`,
+      captchaToken: params.captchaToken,
+    },
+  });
+  if (error) return { ok: false, message: mapAuthError(error) };
+  return { ok: true };
+}
+
+export async function createPasswordlessAccount(params: PasswordlessParams & {
+  username: string;
+}): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
+  if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
+
+  const { data: anonymous, error: anonymousError } = await supabase.auth.signInAnonymously({
     options: {
       data: { username: params.username.trim() },
       captchaToken: params.captchaToken,
     },
   });
-  if (error) return { ok: false, message: mapAuthError(error) };
-  const user = data.user;
-  if (!user) return { ok: false, message: "Sign-up did not complete. Try again." };
-  // With email confirmation ON, Supabase returns a placeholder user with no identities for an
-  // email that already exists (to avoid leaking accounts). Surface that as "already registered".
-  if (Array.isArray(user.identities) && user.identities.length === 0) {
-    return { ok: false, message: mapAuthError("User already registered") };
+  if (anonymousError) return { ok: false, message: mapAuthError(anonymousError) };
+  if (!anonymous.user || !anonymous.session) {
+    return { ok: false, message: "Account creation did not complete. Try again." };
   }
-  return { ok: true, user, session: data.session };
-}
 
-export type SignInResult =
-  | { ok: true; user: User; session: Session }
-  | { ok: false; message: string };
+  const { data: linked, error: linkError } = await supabase.auth.updateUser(
+    {
+      email: params.email.trim(),
+      data: { username: params.username.trim() },
+    },
+    { emailRedirectTo: `${window.location.origin}/` },
+  );
+  if (linkError) {
+    await supabase.auth.signOut();
+    return { ok: false, message: mapAuthError(linkError) };
+  }
 
-export async function signIn(params: {
-  email: string;
-  password: string;
-  captchaToken?: string;
-}): Promise<SignInResult> {
-  if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: params.email.trim(),
-    password: params.password,
-    options: { captchaToken: params.captchaToken },
-  });
-  if (error) return { ok: false, message: mapAuthError(error) };
-  if (!data.session || !data.user) return { ok: false, message: "Login did not complete. Try again." };
-  return { ok: true, user: data.user, session: data.session };
-}
-
-export async function requestPasswordReset(
-  email: string,
-  captchaToken?: string,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
-  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-    redirectTo: window.location.origin,
-    captchaToken,
-  });
-  if (error) return { ok: false, message: mapAuthError(error) };
-  return { ok: true };
-}
-
-export async function updatePassword(
-  password: string,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) return { ok: false, message: mapAuthError(error) };
-  return { ok: true };
+  return { ok: true, user: linked.user ?? anonymous.user };
 }
 
 export async function signOut(): Promise<AuthError | null> {
@@ -140,7 +118,6 @@ export async function signOut(): Promise<AuthError | null> {
   return error;
 }
 
-/** The signed-in player's own profile (RLS limits the query to their row). */
 export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
@@ -155,27 +132,17 @@ export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
   return (data as Profile | null) ?? null;
 }
 
-// ---------------------------------------------------------------------------
-// Client-side validation shared by the auth dialog.
-// ---------------------------------------------------------------------------
-
 export function validateEmail(email: string): string | null {
-  const t = email.trim();
-  if (!t) return "Enter your email.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) return "Enter a valid email address.";
+  const trimmed = email.trim();
+  if (!trimmed) return "Enter your email.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return "Enter a valid email address.";
   return null;
 }
 
 export function validateUsername(username: string): string | null {
-  const t = username.trim();
-  if (!t) return "Choose a username.";
-  if (t.length < USERNAME_MIN) return `Username must be at least ${USERNAME_MIN} characters.`;
-  if (t.length > USERNAME_MAX) return `Username must be ${USERNAME_MAX} characters or fewer.`;
-  return null;
-}
-
-export function validatePassword(password: string): string | null {
-  if (!password) return "Enter a password.";
-  if (password.length < PASSWORD_MIN) return `Password must be at least ${PASSWORD_MIN} characters.`;
+  const trimmed = username.trim();
+  if (!trimmed) return "Choose a username.";
+  if (trimmed.length < USERNAME_MIN) return `Username must be at least ${USERNAME_MIN} characters.`;
+  if (trimmed.length > USERNAME_MAX) return `Username must be ${USERNAME_MAX} characters or fewer.`;
   return null;
 }

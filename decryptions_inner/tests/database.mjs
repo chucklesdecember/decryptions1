@@ -61,6 +61,7 @@ export async function createDatabase() {
       alter table public.solves enable row level security;
       create policy old_unknown_write on public.solves for all to anon, authenticated using(true) with check(true);`);
     await admin.query(await readFile(new URL('../supabase/2026-09-05-accounts.sql', import.meta.url), 'utf8'));
+    await admin.query(await readFile(new URL('../supabase/2026-09-20-passwordless-auth.sql', import.meta.url), 'utf8'));
     // Supabase usually supplies these grants through default privileges.
     await admin.query('grant select on public.profiles to authenticated; grant all on public.progress to authenticated');
     for (const [name, id] of Object.entries(ids).filter(([name]) => ['alice', 'bob', 'legacy', 'cloud'].includes(name))) {

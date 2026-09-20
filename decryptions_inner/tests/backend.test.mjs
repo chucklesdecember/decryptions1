@@ -36,6 +36,11 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
     const anon = await db.clientFor(null, 'anon');
     const alice = await db.clientFor(ids.alice), aliceTab = await db.clientFor(ids.alice);
     const bob = await db.clientFor(ids.bob);
+    await t.test('confirmed contact email stays synchronized to the private profile', async () => {
+      await db.admin.query('update auth.users set email = $1 where id = $2', ['alice+confirmed@example.com', ids.alice]);
+      const profile = (await db.admin.query('select email from public.profiles where id = $1', [ids.alice])).rows[0];
+      assert.equal(profile.email, 'alice+confirmed@example.com');
+    });
     await t.test('anonymous catalog and leaderboard expose no puzzle secrets or owners', async () => {
       const catalog = await rpc(anon, 'list_puzzles');
       assert.deepEqual(catalog.map(p => p.id), [ids.daily, ids.archive]);

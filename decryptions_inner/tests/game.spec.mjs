@@ -9,7 +9,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => { await db?.stop(); await unlink('private/browser-test-canary.json'); });
 
-async function player(browser, userId = ids.alice, loggedIn = true) {
+async function player(browser, userId = ids.alice, loggedIn = true, returningDevice = true) {
   const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
   const client = await db.clientFor(userId), anon = await db.clientFor(null, 'anon');
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'test@example.com', user_metadata: {}, app_metadata: {}, created_at: '2000-01-01T00:00:00Z' };
@@ -18,7 +18,7 @@ async function player(browser, userId = ids.alice, loggedIn = true) {
   // Test-only Auth/HTTP adapter; SQL and RLS run unmodified against PostgreSQL.
   // The real Supabase gateway is responsible for JWT verification in production.
   if (loggedIn) await context.addInitScript(s => localStorage.setItem('sb-test-auth-token', JSON.stringify(s)), session);
-  else await context.addInitScript(() => localStorage.setItem('decryptions_account_used', '1'));
+  else if (returningDevice) await context.addInitScript(() => localStorage.setItem('decryptions_account_used', '1'));
   const behavior = { loseNextWordResponse: false, delayNextWord: false };
   const responses = [];
   await context.route('https://test.supabase.co/**', async route => {
@@ -30,13 +30,19 @@ async function player(browser, userId = ids.alice, loggedIn = true) {
       if (url.pathname.includes('/rpc/')) {
         const p = request.postDataJSON() ?? {};
         const args = name === 'submit_word' ? [p.p_puzzle_id, p.p_word_index, p.p_guess] : name === 'reveal_hint' ? [p.p_puzzle_id, p.p_word_index] : ['start_puzzle', 'get_leaderboard'].includes(name) ? [p.p_puzzle_id] : [];
-        body = await rpc(request.headers().authorization === 'Bearer test-anon-key' ? anon : client, name, args);
+        body = name === 'username_status' ? 'available' : await rpc(request.headers().authorization === 'Bearer test-anon-key' ? anon : client, name, args);
         responses.push({ name, body, params: p });
         if (name === 'submit_word' && behavior.loseNextWordResponse) { behavior.loseNextWordResponse = false; return route.abort(); }
         if (name === 'submit_word' && behavior.delayNextWord) { behavior.delayNextWord = false; await new Promise(r => setTimeout(r, 600)); }
       } else if (name === 'profiles') {
         body = (await client.query('select * from public.profiles')).rows;
       } else if (name === 'logout') { body = {}; }
+      else if (name === 'signup') { body = session; }
+      else if (name === 'otp') { body = {}; }
+      else if (name === 'user' && request.method() === 'PUT') {
+        const input = request.postDataJSON() ?? {};
+        body = { user: { ...user, email: '', new_email: input.email, is_anonymous: true } };
+      }
       else if (name === 'user') { body = user; }
       else if (name === 'token') { body = session; }
       else return route.fulfill({ status: 404, json: { message: 'Unexpected test request' } });
@@ -130,7 +136,7 @@ test('archive does not start until Play, uses server validation, and legacy resu
   } finally { await legacy.context.close(); }
 });
 
-test('signed-out Play waits for login and the dev server denies private files', async ({ browser, request }) => {
+test('passwordless login waits for its email link; account creation can play immediately', async ({ browser, request }) => {
   for (const path of ['/private/browser-test-canary.json', '/supabase/2026-09-06-authoritative-game.sql', '/scripts/import-puzzles.mjs']) {
     const response = await request.get(path);
     expect(response.status()).toBe(403);
@@ -142,9 +148,20 @@ test('signed-out Play waits for login and the dev server denies private files', 
     await expect(p.page.getByRole('dialog')).toBeVisible();
     expect(p.responses.some(r => r.name === 'start_puzzle')).toBe(false);
     await p.page.getByRole('textbox', { name: 'Email', exact: true }).fill('test@example.com');
-    await p.page.getByLabel('Password', { exact: true }).fill('test-password');
-    await p.page.getByRole('button', { name: 'Log in', exact: true }).click();
-    await expect(p.page.getByRole('heading', { name: 'Hidden News', exact: true })).toBeVisible();
-    await expect(p.page.getByText('Unverified · recorded before server validation.')).toBeVisible();
+    await p.page.getByRole('button', { name: 'Email me a sign-in link', exact: true }).click();
+    await expect(p.page.getByText('Check your email for a secure sign-in link. No password is needed.')).toBeVisible();
+    expect(p.responses.some(r => r.name === 'start_puzzle')).toBe(false);
   } finally { await p.context.close(); }
+
+  const signup = await player(browser, ids.bob, false, false);
+  try {
+    await signup.page.getByRole('button', { name: 'Play', exact: true }).click();
+    await signup.page.getByRole('textbox', { name: 'Username', exact: true }).fill('bob');
+    await signup.page.getByRole('textbox', { name: 'Email', exact: true }).fill('new@example.com');
+    await signup.page.getByRole('button', { name: 'Create account and play', exact: true }).click();
+    await expect(signup.page.getByRole('heading', { name: 'How to Play Decryptions' })).toBeVisible();
+    await signup.page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(signup.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
+    expect(signup.responses.some(r => r.name === 'start_puzzle')).toBe(true);
+  } finally { await signup.context.close(); }
 });
