@@ -42,8 +42,8 @@ export function mapAuthError(error: unknown): string {
   if (msg.includes("password should be at least")) {
     return `Password must be at least ${PASSWORD_MIN} characters.`;
   }
-  if (msg.includes("failed to fetch") || msg.includes("network")) {
-    return "Can't reach the server. Check your connection and try again.";
+  if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("reach") || msg.includes("connect")) {
+    return "The account service is currently unavailable. Please try again later.";
   }
   return raw;
 }
@@ -179,4 +179,3 @@ export function validatePassword(password: string): string | null {
   if (password.length < PASSWORD_MIN) return `Password must be at least ${PASSWORD_MIN} characters.`;
   return null;
 }
-

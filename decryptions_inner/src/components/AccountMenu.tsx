@@ -13,10 +13,11 @@ import { useAuth } from "../lib/auth";
 
 interface AccountMenuProps {
   className?: string;
+  prominent?: boolean;
 }
 
 /** Header control: "Log in" when signed out, username menu with Sign out when signed in. */
-export function AccountMenu({ className }: AccountMenuProps) {
+export function AccountMenu({ className, prominent = false }: AccountMenuProps) {
   const { status, profile, user, requireAuth, signOut } = useAuth();
 
   if (status === "unavailable" || status === "loading") return null;
@@ -32,7 +33,9 @@ export function AccountMenu({ className }: AccountMenuProps) {
         aria-label="Log in or sign up"
       >
         <LogIn className="h-4 w-4" />
-        <span className="hidden sm:inline">Log in</span>
+        <span className={prominent ? "inline" : "hidden sm:inline"}>
+          {prominent ? "Log in or create account" : "Log in"}
+        </span>
       </Button>
     );
   }
@@ -50,7 +53,7 @@ export function AccountMenu({ className }: AccountMenuProps) {
           aria-label={`Account menu for ${name}`}
         >
           <UserRound className="h-4 w-4" />
-          <span className="hidden truncate sm:inline">{name}</span>
+          <span className={cn("truncate", prominent ? "inline" : "hidden sm:inline")}>{name}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[12rem]">

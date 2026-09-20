@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-
 import { Archive } from "lucide-react";
 import { AccountMenu } from "./AccountMenu";
 
@@ -15,18 +14,11 @@ export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, unavailabl
   const [logoLoadFailed, setLogoLoadFailed] = useState(false);
 
   return (
-    // min-h (not h) so short / landscape phones scroll instead of clipping the logo off the top.
     <div
-      className="relative isolate flex min-h-app w-full flex-col items-center justify-center bg-amber-50 px-4 pb-8 pt-16"
+      className="relative isolate flex min-h-app w-full flex-col items-center justify-center bg-amber-50 px-4 py-8"
       style={{ backgroundColor: "#fffbea" }}
     >
-      {/* Account: log in / sign up, or the signed-in username menu */}
-      <div className="absolute right-4 top-4 z-20">
-        <AccountMenu className="bg-white/80" />
-      </div>
-
       <div className="relative z-0 flex w-full max-w-sm flex-col items-center text-center">
-        {/* Logo */}
         <div className="mb-6">
           {!logoLoadFailed ? (
             <img
@@ -37,14 +29,11 @@ export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, unavailabl
             />
           ) : (
             <div className="mx-auto flex h-[220px] w-[220px] items-center justify-center rounded-full border-2 border-black">
-              <span style={{ fontFamily: "Times New Roman, serif", fontSize: "28px" }}>
-                D
-              </span>
+              <span style={{ fontFamily: "Times New Roman, serif", fontSize: "28px" }}>D</span>
             </div>
           )}
         </div>
 
-        {/* Title — scales down on narrow screens so it never overflows */}
         <h1
           className="mb-8 text-[clamp(2.75rem,14vw,4rem)] font-normal leading-none text-black"
           style={{ fontFamily: "Times New Roman, serif" }}
@@ -52,8 +41,7 @@ export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, unavailabl
           Decryptions
         </h1>
 
-        {/* Play — Connections-style black pill, white label */}
-        <div className="relative z-10 mb-6 w-full px-4">
+        <div className="relative z-10 w-full px-4">
           <Button
             type="button"
             variant="black"
@@ -65,7 +53,10 @@ export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, unavailabl
           </Button>
         </div>
 
-        {/* Date + Author */}
+        <div className="relative z-10 mb-6 mt-3 w-full px-4">
+          <AccountMenu prominent className="h-12 w-full rounded-full bg-white/70 px-6 text-base" />
+        </div>
+
         <div className="text-sm text-gray-700">
           <p className="font-bold">{puzzleDate}</p>
           <p>By Charlie November</p>
