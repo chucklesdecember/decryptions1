@@ -14,27 +14,28 @@ import { useAuth } from "../lib/auth";
 interface AccountMenuProps {
   className?: string;
   prominent?: boolean;
+  onAccountReady?: () => void;
 }
 
 /** Header control: "Log in" when signed out, username menu with Sign out when signed in. */
-export function AccountMenu({ className, prominent = false }: AccountMenuProps) {
-  const { status, profile, user, requireAuth, signOut } = useAuth();
+export function AccountMenu({ className, prominent = false, onAccountReady }: AccountMenuProps) {
+  const { status, profile, user, isGuest, requireAccount, signOut } = useAuth();
 
   if (status === "unavailable" || status === "loading") return null;
 
-  if (status === "signed_out") {
+  if (status === "signed_out" || isGuest) {
     return (
       <Button
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => requireAuth()}
+        onClick={() => requireAccount(() => onAccountReady?.())}
         className={cn("h-9 shrink-0 gap-1.5 px-2.5 sm:px-3", className)}
-        aria-label="Log in or sign up"
+        aria-label="Log in or create account"
       >
         <LogIn className="h-4 w-4" />
         <span className={prominent ? "inline" : "hidden sm:inline"}>
-          {prominent ? "Log in or create account" : "Log in"}
+          {prominent || isGuest ? "Log in or create account" : "Log in"}
         </span>
       </Button>
     );

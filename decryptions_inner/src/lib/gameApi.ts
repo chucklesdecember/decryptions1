@@ -18,6 +18,7 @@ export async function gameRpc<T>(name: string, params?: Record<string, unknown>)
   if (error) {
     if (error.code === '42501' || error.code === 'PGRST301') throw new Error('Please sign in again to continue. Your attempt is saved.');
     if (error.code === 'P0002') throw new Error('This puzzle is unavailable. Return home and try again.');
+    if (error.code === 'P0003') throw new Error('Create a free account or log in to play archived puzzles.');
     throw new Error('Could not reach the game server. Check your connection and retry. Your timer keeps running.');
   }
   if (data == null) throw new Error('The game server returned no result. Please retry.');

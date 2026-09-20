@@ -52,8 +52,10 @@ export async function createDatabase() {
       create table auth.users(id uuid primary key, email text, raw_user_meta_data jsonb);
       create function auth.uid() returns uuid language sql stable as
         'select nullif(current_setting(''request.jwt.claim.sub'', true), '''')::uuid';
+      create function auth.jwt() returns jsonb language sql stable as
+        'select coalesce(nullif(current_setting(''request.jwt.claims'', true), '''')::jsonb, ''{}''::jsonb)';
       grant usage on schema auth, public to anon, authenticated;
-      grant execute on function auth.uid() to anon, authenticated;
+      grant execute on function auth.uid(), auth.jwt() to anon, authenticated;
       `);
     await admin.query(await readFile(new URL('../supabase/000-initial-solves.sql', import.meta.url), 'utf8'));
     await admin.query(`
@@ -73,11 +75,15 @@ export async function createDatabase() {
     await admin.query('alter table public.solves enable trigger solves_set_owner_trg');
     await admin.query(`insert into public.progress(user_id, puzzle_id, time_seconds, hints_used) values($1, $2, 9, 1)`, [ids.cloud, puzzles[0].legacyId]);
     await admin.query(migration);
+    await admin.query(await readFile(new URL('../supabase/2026-09-21-guest-archive.sql', import.meta.url), 'utf8'));
     await importPuzzles(admin, puzzles);
-    async function clientFor(userId, role = 'authenticated') {
+    async function clientFor(userId, role = 'authenticated', isAnonymous = false) {
       const client = new pg.Client(options); await client.connect(); clients.push(client);
       await client.query(`set role ${role === 'anon' ? 'anon' : 'authenticated'}`);
-      if (userId) await client.query("select set_config('request.jwt.claim.sub', $1, false)", [userId]);
+      if (userId) {
+        await client.query("select set_config('request.jwt.claim.sub', $1, false)", [userId]);
+        await client.query("select set_config('request.jwt.claims', $1, false)", [JSON.stringify({ sub: userId, is_anonymous: isAnonymous })]);
+      }
       return client;
     }
     return { admin, clientFor, options, async stop() {

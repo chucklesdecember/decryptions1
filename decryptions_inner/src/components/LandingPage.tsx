@@ -5,12 +5,13 @@ import { AccountMenu } from "./AccountMenu";
 
 interface LandingPageProps {
   puzzleDate: string;
+  playLabel: string;
   unavailable?: boolean;
   onStartGame: () => void;
   onOpenArchive: () => void;
 }
 
-export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, unavailable }: LandingPageProps) {
+export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, playLabel, unavailable }: LandingPageProps) {
   const [logoLoadFailed, setLogoLoadFailed] = useState(false);
 
   return (
@@ -49,12 +50,12 @@ export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, unavailabl
             disabled={unavailable}
             className="relative z-10 h-12 w-full rounded-full border-none bg-black px-6 text-base font-medium text-white shadow-none hover:opacity-90"
           >
-            Play
+            {playLabel}
           </Button>
         </div>
 
         <div className="relative z-10 mb-6 mt-3 w-full px-4">
-          <AccountMenu prominent className="h-12 w-full rounded-full bg-white/70 px-6 text-base" />
+          <AccountMenu prominent onAccountReady={onStartGame} className="h-12 w-full rounded-full bg-white/70 px-6 text-base" />
         </div>
 
         <div className="text-sm text-gray-700">

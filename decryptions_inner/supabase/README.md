@@ -10,9 +10,10 @@ This change builds on account PR #5. Test in a separate Supabase staging project
 2. Apply `2026-09-05-accounts.sql` if the account migration has not been applied.
 3. Apply `2026-09-06-authoritative-game.sql` using the Supabase SQL Editor or your migration runner. This migration is transactional and repeatable; it removes all old `solves`/`progress` policies, revokes direct client table access, and removes `claim_solves`. **Do not rerun the older accounts migration afterward.**
 4. Apply `2026-09-20-passwordless-auth.sql` to keep the private profile email synchronized after confirmation.
-5. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
-6. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
-7. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
+5. Apply `2026-09-21-guest-archive.sql` so anonymous guests can play the daily puzzle while confirmed accounts retain archive access.
+6. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
+7. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
+8. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
 
 Rollback: retain the database restrictions and take the game offline while correcting the frontend or migration. Restoring the old frontend alone cannot submit scores. Do not restore permissive grants/policies as a workaround.
 

@@ -70,6 +70,14 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       await assert.rejects(rpc(alice, 'start_puzzle', [ids.future]), { code: 'P0002' });
       await assert.rejects(rpc(bob, 'submit_word', [ids.daily, 0, 'HIDDEN']), { code: 'P0002' });
     });
+    await t.test('guests can play the current puzzle but archived puzzles require an account', async () => {
+      const guestId = randomUUID();
+      await db.admin.query('insert into auth.users values($1, $2, $3)', [guestId, '', { username: 'daily-guest' }]);
+      const guest = await db.clientFor(guestId, 'authenticated', true);
+      const daily = await rpc(guest, 'start_puzzle', [ids.daily]);
+      assert.equal(daily.id, ids.daily);
+      await assert.rejects(rpc(guest, 'start_puzzle', [ids.archive]), { code: 'P0003' });
+    });
     await t.test('concurrent starts persist one start time; word and hint responses reveal only earned data', async () => {
       const [a, b] = await Promise.all([rpc(alice, 'start_puzzle', [ids.daily]), rpc(aliceTab, 'start_puzzle', [ids.daily])]);
       assert.equal(a.startedAt, b.startedAt); assert.equal(a.result, null);

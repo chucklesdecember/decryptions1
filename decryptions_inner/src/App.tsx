@@ -6,6 +6,7 @@ import { InstructionsDialog } from './components/InstructionsDialog';
 import { Button } from './components/ui/button';
 import { useAuth } from './lib/auth';
 import { formatPuzzleDate, listPuzzles, type PuzzleSummary } from './lib/gameApi';
+import { takePuzzleForEmailConfirmation } from './lib/decryptionsStorage';
 
 type Selection = { puzzle: PuzzleSummary; userId: string };
 
@@ -28,8 +29,15 @@ export default function App() {
   useEffect(() => {
     if (auth.status === 'signed_out') { setSelected(null); setFirstPuzzle(null); }
   }, [auth.status]);
-  const play = (puzzle: PuzzleSummary) => auth.requireAuth((kind, userId) => {
-    if (kind === 'signup') setFirstPuzzle({ puzzle, userId });
+  useEffect(() => {
+    if (!auth.user || auth.isGuest || !puzzles.length) return;
+    const destination = takePuzzleForEmailConfirmation();
+    if (!destination) return;
+    const puzzle = destination === 'daily' ? puzzles[0] : puzzles.find(item => item.id === destination);
+    if (puzzle) setSelected({ puzzle, userId: auth.user.id });
+  }, [auth.user?.id, auth.isGuest, puzzles]);
+  const play = (puzzle: PuzzleSummary) => auth.requirePlayer((kind, userId) => {
+    if (kind === 'signup' || kind === 'guest') setFirstPuzzle({ puzzle, userId });
     else setSelected({ puzzle, userId });
   });
   const home = () => { setSelected(null); setArchive(false); };
@@ -38,6 +46,7 @@ export default function App() {
   if (archive) return <ArchiveList puzzles={puzzles.slice(1)} onBack={home} onPlay={play} />;
   return <>
     <LandingPage puzzleDate={puzzles[0] ? formatPuzzleDate(puzzles[0].date) : ''}
+      playLabel={auth.status === 'signed_in' && !auth.isGuest ? 'Play' : 'Play as guest'}
       unavailable={!puzzles.length || !!error || auth.status === 'loading' || auth.syncing}
       onStartGame={() => { if (puzzles[0]) play(puzzles[0]); }} onOpenArchive={() => setArchive(true)} />
     {(!loaded || error || !puzzles.length) && <div className="mx-auto max-w-md px-4 pb-6 text-center" role="status">

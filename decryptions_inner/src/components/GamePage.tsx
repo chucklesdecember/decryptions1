@@ -49,6 +49,7 @@ export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary;
         </div>
         {result && <>
           <p className="text-center">Solved in {formatTime(result.timeSeconds)} with {state.hintsUsed} hint{state.hintsUsed === 1 ? '' : 's'}.</p>
+          {result.rowId && <p className="text-center text-sm text-green-800">Your time was automatically added to the leaderboard.</p>}
           {!result.verified && <p className="text-sm text-amber-800">Unverified · recorded before server validation.</p>}
           <div className="flex flex-wrap justify-center gap-2">
             <Button onClick={() => setShare(true)}>Share result</Button>

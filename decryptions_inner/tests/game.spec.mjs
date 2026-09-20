@@ -12,9 +12,11 @@ test.afterAll(async () => { await db?.stop(); await unlink('private/browser-test
 async function player(browser, userId = ids.alice, loggedIn = true, returningDevice = true) {
   const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
   const client = await db.clientFor(userId), anon = await db.clientFor(null, 'anon');
-  const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'test@example.com', user_metadata: {}, app_metadata: {}, created_at: '2000-01-01T00:00:00Z' };
+  const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'test@example.com', is_anonymous: false, user_metadata: {}, app_metadata: {}, created_at: '2000-01-01T00:00:00Z' };
+  const guestUser = { ...user, email: '', is_anonymous: true };
   const token = `${Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')}.${Buffer.from(JSON.stringify({ sub: userId, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.test-signature`;
   const session = { access_token: token, refresh_token: 'test-refresh', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, token_type: 'bearer', user };
+  const guestSession = { ...session, user: guestUser };
   // Test-only Auth/HTTP adapter; SQL and RLS run unmodified against PostgreSQL.
   // The real Supabase gateway is responsible for JWT verification in production.
   if (loggedIn) await context.addInitScript(s => localStorage.setItem('sb-test-auth-token', JSON.stringify(s)), session);
@@ -37,11 +39,11 @@ async function player(browser, userId = ids.alice, loggedIn = true, returningDev
       } else if (name === 'profiles') {
         body = (await client.query('select * from public.profiles')).rows;
       } else if (name === 'logout') { body = {}; }
-      else if (name === 'signup') { body = session; }
+      else if (name === 'signup') { body = guestSession; }
       else if (name === 'otp') { body = {}; }
       else if (name === 'user' && request.method() === 'PUT') {
         const input = request.postDataJSON() ?? {};
-        body = { user: { ...user, email: '', new_email: input.email, is_anonymous: true } };
+        body = { user: { ...guestUser, new_email: input.email } };
       }
       else if (name === 'user') { body = user; }
       else if (name === 'token') { body = session; }
@@ -51,7 +53,7 @@ async function player(browser, userId = ids.alice, loggedIn = true, returningDev
   });
   const page = await context.newPage();
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: loggedIn ? 'Play' : 'Play as guest', exact: true })).toBeEnabled();
   return { context, page, behavior, responses };
 }
 
@@ -144,7 +146,11 @@ test('passwordless login waits for its email link; account creation can play imm
   }
   const p = await player(browser, ids.cloud, false);
   try {
-    await p.page.getByRole('button', { name: 'Play', exact: true }).click();
+    await p.page.getByRole('button', { name: 'Archive', exact: true }).click();
+    await expect(p.page.getByRole('heading', { name: 'Unlock the archive' })).toBeVisible();
+    await expect(p.page.getByText('No past puzzles are available yet.')).toHaveCount(0);
+    await p.page.getByRole('button', { name: 'Back', exact: true }).click();
+    await p.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
     await expect(p.page.getByRole('dialog')).toBeVisible();
     expect(p.responses.some(r => r.name === 'start_puzzle')).toBe(false);
     await p.page.getByRole('textbox', { name: 'Email', exact: true }).fill('test@example.com');
@@ -155,13 +161,28 @@ test('passwordless login waits for its email link; account creation can play imm
 
   const signup = await player(browser, ids.bob, false, false);
   try {
-    await signup.page.getByRole('button', { name: 'Play', exact: true }).click();
+    await signup.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
     await signup.page.getByRole('textbox', { name: 'Username', exact: true }).fill('bob');
     await signup.page.getByRole('textbox', { name: 'Email', exact: true }).fill('new@example.com');
     await signup.page.getByRole('button', { name: 'Create account and play', exact: true }).click();
-    await expect(signup.page.getByRole('heading', { name: 'How to Play Decryptions' })).toBeVisible();
-    await signup.page.getByRole('button', { name: 'Play', exact: true }).click();
     await expect(signup.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
     expect(signup.responses.some(r => r.name === 'start_puzzle')).toBe(true);
   } finally { await signup.context.close(); }
+
+  const guest = await player(browser, ids.bob, false, false);
+  try {
+    await guest.page.getByRole('button', { name: 'Play as guest', exact: true }).click();
+    await expect(guest.page.getByRole('heading', { name: 'Choose a temporary username' })).toBeVisible();
+    await guest.page.getByRole('textbox', { name: 'Temporary username' }).fill('bob');
+    await guest.page.getByRole('button', { name: 'Start playing' }).click();
+    await expect(guest.page.getByRole('heading', { name: 'How to Play Decryptions' })).toBeVisible();
+    await guest.page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(guest.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
+    await guest.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
+    await expect(guest.page.getByRole('textbox', { name: 'Username', exact: true })).toHaveValue('bob');
+    await expect(guest.page.getByRole('textbox', { name: 'Username', exact: true })).toBeDisabled();
+    await guest.page.getByRole('textbox', { name: 'Email', exact: true }).fill('guest@example.com');
+    await guest.page.getByRole('button', { name: 'Create account and play', exact: true }).click();
+    await expect(guest.page.getByText('You can play now. Check your email to confirm your account.')).toBeVisible();
+  } finally { await guest.context.close(); }
 });

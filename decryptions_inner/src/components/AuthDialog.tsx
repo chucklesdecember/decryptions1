@@ -22,7 +22,7 @@ import {
   USERNAME_MAX,
   type AuthKind,
 } from "../lib/authApi";
-import { getStoredUsername, hasAccountBeenUsedOnDevice } from "../lib/decryptionsStorage";
+import { getStoredUsername, hasAccountBeenUsedOnDevice, rememberPuzzleForEmailConfirmation } from "../lib/decryptionsStorage";
 
 const TURNSTILE_SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) || "";
 
@@ -30,13 +30,14 @@ interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAuthenticated: (kind: AuthKind, user: User) => Promise<void>;
+  initialUsername?: string;
 }
 
 type Tab = "login" | "signup";
 
 const PRIMARY_BUTTON = "h-11 w-full bg-black text-base font-medium text-[#fffbea] hover:bg-gray-800";
 
-export function AuthDialog({ open, onOpenChange, onAuthenticated }: AuthDialogProps) {
+export function AuthDialog({ open, onOpenChange, onAuthenticated, initialUsername }: AuthDialogProps) {
   const [tab, setTab] = useState<Tab>("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [signupUsername, setSignupUsername] = useState("");
@@ -52,14 +53,14 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: AuthDialogPr
     if (!open) return;
     setTab(hasAccountBeenUsedOnDevice() ? "login" : "signup");
     setLoginEmail("");
-    setSignupUsername(getStoredUsername() ?? "");
+    setSignupUsername(initialUsername ?? getStoredUsername() ?? "");
     setSignupEmail("");
     setError(null);
     setInfo(null);
     setBusy(false);
     setSyncing(false);
     setCaptchaToken(null);
-  }, [open]);
+  }, [open, initialUsername]);
 
   const captchaRequired = TURNSTILE_SITE_KEY.length > 0;
   const captchaPending = captchaRequired && !captchaToken;
@@ -116,13 +117,15 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: AuthDialogPr
     setInfo(null);
     try {
       const wanted = signupUsername.trim();
-      const availability = await checkUsername(wanted);
-      const legacyName = getStoredUsername()?.toLowerCase();
-      const takenByAccount = availability === "taken_account";
-      const takenByStranger = availability === "taken_anonymous" && legacyName !== wanted.toLowerCase();
-      if (takenByAccount || takenByStranger) {
-        setError("That username is already taken. Try another.");
-        return;
+      if (!initialUsername) {
+        const availability = await checkUsername(wanted);
+        const legacyName = getStoredUsername()?.toLowerCase();
+        const takenByAccount = availability === "taken_account";
+        const takenByStranger = availability === "taken_anonymous" && legacyName !== wanted.toLowerCase();
+        if (takenByAccount || takenByStranger) {
+          setError("That username is already taken. Try another.");
+          return;
+        }
       }
 
       const result = await createPasswordlessAccount({
@@ -135,6 +138,7 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: AuthDialogPr
         return;
       }
 
+      rememberPuzzleForEmailConfirmation();
       setSyncing(true);
       await onAuthenticated("signup", result.user);
     } finally {
@@ -218,10 +222,12 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: AuthDialogPr
                       maxLength={USERNAME_MAX}
                       value={signupUsername}
                       onChange={(event) => setSignupUsername(event.target.value)}
-                      disabled={busy}
+                      disabled={busy || !!initialUsername}
                       autoFocus
                     />
-                    <p className="text-xs text-muted-foreground">Shown on the leaderboard.</p>
+                    <p className="text-xs text-muted-foreground">
+                      {initialUsername ? "Your guest leaderboard name will become your account username." : "Shown on the leaderboard."}
+                    </p>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <Label htmlFor="auth-signup-email">Email</Label>

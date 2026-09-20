@@ -10,7 +10,7 @@ export interface Profile {
 }
 
 export type UsernameStatus = "available" | "taken_account" | "taken_anonymous";
-export type AuthKind = "signup" | "login";
+export type AuthKind = "signup" | "login" | "guest";
 
 export const USERNAME_MIN = 2;
 export const USERNAME_MAX = 24;
@@ -65,6 +65,13 @@ interface PasswordlessParams {
   captchaToken?: string;
 }
 
+const PRODUCTION_AUTH_REDIRECT = "https://decryptions1.vercel.app/";
+
+export function authRedirectUrl(): string {
+  const configured = (import.meta.env.VITE_AUTH_REDIRECT_URL as string | undefined)?.trim();
+  return configured || PRODUCTION_AUTH_REDIRECT;
+}
+
 export async function sendLoginLink(
   params: PasswordlessParams,
 ): Promise<{ ok: true } | { ok: false; message: string }> {
@@ -73,7 +80,7 @@ export async function sendLoginLink(
     email: params.email.trim(),
     options: {
       shouldCreateUser: false,
-      emailRedirectTo: `${window.location.origin}/`,
+      emailRedirectTo: authRedirectUrl(),
       captchaToken: params.captchaToken,
     },
   });
@@ -86,30 +93,50 @@ export async function createPasswordlessAccount(params: PasswordlessParams & {
 }): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
   if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
 
-  const { data: anonymous, error: anonymousError } = await supabase.auth.signInAnonymously({
-    options: {
-      data: { username: params.username.trim() },
-      captchaToken: params.captchaToken,
-    },
-  });
-  if (anonymousError) return { ok: false, message: mapAuthError(anonymousError) };
-  if (!anonymous.user || !anonymous.session) {
-    return { ok: false, message: "Account creation did not complete. Try again." };
+  const current = (await supabase.auth.getUser()).data.user;
+  let anonymous = current;
+  if (!anonymous?.is_anonymous) {
+    const { data, error } = await supabase.auth.signInAnonymously({
+      options: {
+        data: { username: params.username.trim() },
+        captchaToken: params.captchaToken,
+      },
+    });
+    if (error) return { ok: false, message: mapAuthError(error) };
+    anonymous = data.user;
   }
+  if (!anonymous) return { ok: false, message: "Account creation did not complete. Try again." };
 
   const { data: linked, error: linkError } = await supabase.auth.updateUser(
     {
       email: params.email.trim(),
       data: { username: params.username.trim() },
     },
-    { emailRedirectTo: `${window.location.origin}/` },
+    { emailRedirectTo: authRedirectUrl() },
   );
   if (linkError) {
-    await supabase.auth.signOut();
     return { ok: false, message: mapAuthError(linkError) };
   }
 
-  return { ok: true, user: linked.user ?? anonymous.user };
+  return { ok: true, user: linked.user ?? anonymous };
+}
+
+export async function createGuest(params: {
+  username: string;
+  captchaToken?: string;
+}): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
+  if (!supabase) return { ok: false, message: "Guest play is unavailable in this build." };
+  const { data, error } = await supabase.auth.signInAnonymously({
+    options: {
+      data: { username: params.username.trim() },
+      captchaToken: params.captchaToken,
+    },
+  });
+  if (error) return { ok: false, message: mapAuthError(error) };
+  if (!data.user || !data.session) {
+    return { ok: false, message: "Guest play did not start. Try again." };
+  }
+  return { ok: true, user: data.user };
 }
 
 export async function signOut(): Promise<AuthError | null> {

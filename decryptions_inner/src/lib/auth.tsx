@@ -7,14 +7,17 @@ import { cacheProgress, syncAfterSignIn } from './progressSync';
 import type { ProgressRow } from './gameApi';
 import { clearLocalProgress, markAccountUsedOnDevice } from './decryptionsStorage';
 import { AuthDialog } from '../components/AuthDialog';
+import { GuestDialog } from '../components/GuestDialog';
 import { Toaster } from '../components/ui/sonner';
 
 export type AuthStatus = 'loading' | 'signed_out' | 'signed_in' | 'unavailable';
 interface AuthContextValue {
   status: AuthStatus; user: User | null; profile: Profile | null; syncing: boolean;
+  isGuest: boolean;
   progress: ProgressRow[];
   refreshProgress: () => Promise<void>;
-  requireAuth: (onSuccess?: (kind: AuthKind, userId: string) => void) => void;
+  requirePlayer: (onSuccess?: (kind: AuthKind, userId: string) => void) => void;
+  requireAccount: (onSuccess?: (kind: AuthKind, userId: string) => void) => void;
   signOut: () => Promise<void>;
 }
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -25,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState<ProgressRow[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [guestDialogOpen, setGuestDialogOpen] = useState(false);
   const userRef = useRef<User | null>(null);
   const epoch = useRef(0);
   const syncJob = useRef<Promise<boolean> | null>(null);
@@ -48,7 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const [p, rows] = await Promise.all([fetchOwnProfile(u.id), syncAfterSignIn()]);
         if (generation !== epoch.current) return false;
         if (!p) throw new Error('Your account profile is unavailable. Please try signing in again.');
-        setProfile(p); setProgress(rows); cacheProgress(u.id, rows); markAccountUsedOnDevice();
+        setProfile(p); setProgress(rows); cacheProgress(u.id, rows);
+        if (!u.is_anonymous) markAccountUsedOnDevice();
         return true;
       } catch (err) {
         if (generation === epoch.current) toast.error(err instanceof Error ? err.message : 'Could not load account progress. Please retry.');
@@ -79,13 +84,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     return () => { active = false; epoch.current++; sub.subscription.unsubscribe(); };
   }, [acceptUser]);
-  useEffect(() => { if (user) void sync(); }, [user?.id, sync]);
-  const requireAuth = useCallback((onSuccess?: (kind: AuthKind, userId: string) => void) => {
+  useEffect(() => { if (user) void sync(); }, [user?.id, user?.is_anonymous, sync]);
+  const requirePlayer = useCallback((onSuccess?: (kind: AuthKind, userId: string) => void) => {
     if (!supabase) { toast.error('The game is currently unavailable. Please try again later.'); return; }
     if (userRef.current) {
       const id = userRef.current.id;
       void sync().then(ok => { if (ok && userRef.current?.id === id) onSuccess?.('login', id); });
-    } else { pendingSuccess.current = onSuccess ?? null; setDialogOpen(true); }
+    } else { pendingSuccess.current = onSuccess ?? null; setGuestDialogOpen(true); }
+  }, [sync]);
+  const requireAccount = useCallback((onSuccess?: (kind: AuthKind, userId: string) => void) => {
+    if (!supabase) { toast.error('Accounts are currently unavailable. Please try again later.'); return; }
+    if (userRef.current && !userRef.current.is_anonymous) {
+      const id = userRef.current.id;
+      void sync().then(ok => { if (ok && userRef.current?.id === id) onSuccess?.('login', id); });
+      return;
+    }
+    pendingSuccess.current = onSuccess ?? null;
+    setDialogOpen(true);
   }, [sync]);
   const handleAuthenticated = useCallback(async (kind: AuthKind, u: User) => {
     acceptUser(u);
@@ -96,18 +111,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const cb = pendingSuccess.current; pendingSuccess.current = null; cb?.(kind, u.id);
   }, [acceptUser, sync]);
+  const handleGuestStarted = useCallback(async (u: User) => {
+    acceptUser(u);
+    if (!(await sync()) || userRef.current?.id !== u.id) return;
+    setGuestDialogOpen(false);
+    const cb = pendingSuccess.current; pendingSuccess.current = null; cb?.('guest', u.id);
+  }, [acceptUser, sync]);
   const signOut = useCallback(async () => {
     const error = await apiSignOut();
     if (error) { toast.error('Could not sign out. Check your connection and retry.'); return; }
     pendingSuccess.current = null; acceptUser(null); clearLocalProgress();
   }, [acceptUser]);
-  const value = useMemo(() => ({ status, user, profile, progress, syncing, refreshProgress, requireAuth, signOut }),
-    [status, user, profile, progress, syncing, refreshProgress, requireAuth, signOut]);
+  const isGuest = !!user?.is_anonymous;
+  const value = useMemo(() => ({ status, user, profile, isGuest, progress, syncing, refreshProgress, requirePlayer, requireAccount, signOut }),
+    [status, user, profile, isGuest, progress, syncing, refreshProgress, requirePlayer, requireAccount, signOut]);
   return <AuthContext.Provider value={value}>
     {children}
     {supabase && <>
       <AuthDialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) pendingSuccess.current = null; }}
-        onAuthenticated={handleAuthenticated} />
+        onAuthenticated={handleAuthenticated} initialUsername={profile?.username} />
+      <GuestDialog open={guestDialogOpen}
+        onOpenChange={open => { setGuestDialogOpen(open); if (!open) pendingSuccess.current = null; }}
+        onStarted={handleGuestStarted} />
     </>}
     <Toaster richColors position="top-center" />
   </AuthContext.Provider>;
