@@ -27,6 +27,7 @@ export const puzzles = [
     words: [{ answer: 'SECRET', clues: [{ type: 'text', content: 'NOT PUBLISHED' }] }], hints: ['Future secret hint'] },
 ];
 export const migration = await readFile(new URL('../supabase/2026-09-06-authoritative-game.sql', import.meta.url), 'utf8');
+export const pauseMigration = await readFile(new URL('../supabase/2026-09-21-pausable-timer.sql', import.meta.url), 'utf8');
 
 async function freePort() {
   const server = net.createServer();
@@ -87,6 +88,7 @@ export async function createDatabase() {
     await admin.query(`insert into public.progress(user_id, puzzle_id, time_seconds, hints_used) values($1, $2, 9, 1)`, [ids.cloud, puzzles[0].legacyId]);
     await admin.query(migration);
     await admin.query(await readFile(new URL('../supabase/2026-09-21-guest-archive.sql', import.meta.url), 'utf8'));
+    await admin.query(pauseMigration);
     await importPuzzles(admin, puzzles);
     async function clientFor(userId, role = 'authenticated', isAnonymous = false) {
       const client = new pg.Client(options); await client.connect(); clients.push(client);
@@ -103,7 +105,7 @@ export async function createDatabase() {
   } catch (err) { await admin.end(); await server.stop(); throw err; }
 }
 export async function rpc(client, name, args = []) {
-  if (!['list_puzzles', 'start_puzzle', 'submit_word', 'reveal_hint', 'get_my_progress', 'get_leaderboard'].includes(name)) throw new Error('Unknown test RPC');
+  if (!['list_puzzles', 'start_puzzle', 'pause_puzzle', 'submit_word', 'reveal_hint', 'get_my_progress', 'get_leaderboard'].includes(name)) throw new Error('Unknown test RPC');
   const params = args.map((_, i) => `$${i + 1}`).join(',');
   return (await client.query(`select public.${name}(${params}) as result`, args)).rows[0].result;
 }

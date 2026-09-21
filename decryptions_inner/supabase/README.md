@@ -10,16 +10,17 @@ This change builds on account PR #5. Test in a separate Supabase staging project
 2. Apply `2026-09-05-accounts.sql` if the account migration has not been applied.
 3. Apply `2026-09-06-authoritative-game.sql` using the Supabase SQL Editor or your migration runner. This migration is transactional and repeatable; it removes all old `solves`/`progress` policies, revokes direct client table access, and removes `claim_solves`. **Do not rerun the older accounts migration afterward.**
 4. Apply `2026-09-20-passwordless-auth.sql` to keep the private profile email synchronized after confirmation.
-5. Apply `2026-09-21-guest-archive.sql` so anonymous guests can play the daily puzzle while confirmed accounts retain archive access.
-6. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
-7. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
-8. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
+5. Apply `2026-09-21-guest-archive.sql`, then `2026-09-21-pausable-timer.sql`.
+6. Apply `2026-09-21-remove-september-15.sql` on projects that previously imported the retired September 15 puzzle.
+7. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
+8. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
+9. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
 
 Rollback: retain the database restrictions and take the game offline while correcting the frontend or migration. Restoring the old frontend alone cannot submit scores. Do not restore permissive grants/policies as a workaround.
 
 ## Private puzzle import
 
-For the **12 already-public historical puzzles only**, including September 15, 2026, generate an ignored local seed from the pinned historical revision on main:
+For the **11 retained already-public historical puzzles**, excluding the retired September 15, 2026 puzzle, generate an ignored local seed from the pinned historical revision on main:
 
 ```sh
 npm run export:legacy
@@ -52,13 +53,14 @@ The importer preserves old scores, timestamps, hints, names, and ownership, repl
 | `list_puzzles()` | Public | Published UUIDs, dates, categories only; newest first |
 | `get_leaderboard(p_puzzle_id uuid)` | Public | Top 100: time, hints, timestamp, then row UUID; old scores labeled `verified: false`; no account IDs |
 | `start_puzzle(p_puzzle_id uuid)` | Signed in | Create/resume the one account attempt before returning clues and lengths; completed accounts receive their saved result |
+| `pause_puzzle(p_puzzle_id uuid)` | Signed in | Pause the active attempt and return its frozen elapsed time |
 | `submit_word(p_puzzle_id uuid, p_word_index integer, p_guess text)` | Signed in | Zero-based word index, case-insensitive exact match; final accepted word atomically writes score and progress |
 | `reveal_hint(p_puzzle_id uuid, p_word_index integer)` | Signed in | Record each hint once, then return its text |
 | `get_my_progress()` | Signed in | Read only the caller's completed, published puzzles |
 
 `start_puzzle` and `reveal_hint` return `GameState`; submissions return `{ state, correct }` or `{ retryAfterSeconds }`. Word responses reveal only already-accepted answers and already-revealed hints. Headline and article URL appear only in completed results. There is no API accepting a score, owner, completion timestamp, or hint count.
 
-The database derives ownership from `auth.uid()`, serializes changes with row locks, and enforces unique account/puzzle keys. Time is whole elapsed seconds measured by the database. It keeps running through hidden puzzles, navigation, sign-out, and disconnection. There is no attempt-reset endpoint. Sixty word checks per account per fixed one-minute window are shared across all puzzles; hints and resume still work when checks are limited. Client storage is an optional account cache and is never imported as evidence of a solve.
+The database derives ownership from `auth.uid()`, serializes changes with row locks, and enforces unique account/puzzle keys. Time is whole elapsed seconds measured by the database. Explicit pauses and in-app navigation exclude paused time; closing the browser without pausing does not. There is no attempt-reset endpoint. Sixty word checks per account per fixed one-minute window are shared across all puzzles; hints and resume still work when checks are limited. Client storage is an optional account cache and is never imported as evidence of a solve.
 
 Legacy scores remain ranked and unverified, including potentially forged historical times. One account can finish each puzzle once; the system does not prevent multiple accounts or outside assistance.
 

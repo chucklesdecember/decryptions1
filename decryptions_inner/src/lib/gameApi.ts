@@ -9,7 +9,7 @@ export interface ProgressRow {
 }
 export interface GameState extends PuzzleSummary {
   startedAt: string | null; serverNow: string; words: PublicWord[];
-  completed: boolean; hintsUsed: number;
+  completed: boolean; hintsUsed: number; elapsedSeconds: number; paused: boolean;
   result: (Omit<ProgressRow, 'puzzleId' | 'hintsUsed'> & { headline: string; articleUrl: string | null }) | null;
 }
 export async function gameRpc<T>(name: string, params?: Record<string, unknown>): Promise<T> {
@@ -19,13 +19,15 @@ export async function gameRpc<T>(name: string, params?: Record<string, unknown>)
     if (error.code === '42501' || error.code === 'PGRST301') throw new Error('Please sign in again to continue. Your attempt is saved.');
     if (error.code === 'P0002') throw new Error('This puzzle is unavailable. Return home and try again.');
     if (error.code === 'P0003') throw new Error('Create a free account or log in to play archived puzzles.');
-    throw new Error('Could not reach the game server. Check your connection and retry. Your timer keeps running.');
+    if (error.code === 'P0004') throw new Error('Resume the puzzle before checking an answer or using a hint.');
+    throw new Error('Could not reach the game server. Check your connection and retry.');
   }
   if (data == null) throw new Error('The game server returned no result. Please retry.');
   return data as T;
 }
 export const listPuzzles = () => gameRpc<PuzzleSummary[]>('list_puzzles');
 export const startPuzzle = (puzzleId: string) => gameRpc<GameState>('start_puzzle', { p_puzzle_id: puzzleId });
+export const pausePuzzle = (puzzleId: string) => gameRpc<GameState>('pause_puzzle', { p_puzzle_id: puzzleId });
 export const fetchProgress = () => gameRpc<ProgressRow[]>('get_my_progress');
 export const revealHint = (puzzleId: string, index: number) => gameRpc<GameState>('reveal_hint', { p_puzzle_id: puzzleId, p_word_index: index });
 export const submitWord = (puzzleId: string, index: number, guess: string) =>

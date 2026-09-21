@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { revealHint, startPuzzle, submitWord, type GameState } from './gameApi';
+import { pausePuzzle, revealHint, startPuzzle, submitWord, type GameState } from './gameApi';
 
 // One queue per mounted account/puzzle. The database also serializes across devices.
 export function useGame(puzzleId: string, onComplete: () => void) {
@@ -25,17 +25,18 @@ export function useGame(puzzleId: string, onComplete: () => void) {
     return task;
   }, []);
   const resume = useCallback(async () => {
-    try { await enqueue(async () => apply(await startPuzzle(puzzleId))); }
-    catch (err) { if (alive.current) setError(err instanceof Error ? err.message : 'Could not load puzzle. Retry.'); }
+    try { await enqueue(async () => apply(await startPuzzle(puzzleId))); return true; }
+    catch (err) { if (alive.current) setError(err instanceof Error ? err.message : 'Could not load puzzle. Retry.'); return false; }
   }, [puzzleId, apply, enqueue]);
   useEffect(() => {
     alive.current = true;
     void resume();
-    const onFocus = () => { if (document.visibilityState === 'visible') void resume(); };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onFocus);
-    return () => { alive.current = false; window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus); };
+    return () => { alive.current = false; };
   }, [resume]);
+  const pause = useCallback(async () => {
+    try { await enqueue(async () => apply(await pausePuzzle(puzzleId))); return true; }
+    catch (err) { if (alive.current) setError(err instanceof Error ? err.message : 'Could not pause puzzle. Retry.'); return false; }
+  }, [puzzleId, apply, enqueue]);
   const checkWord = useCallback((index: number, guess: string) => enqueue(async () => {
     const response = await submitWord(puzzleId, index, guess);
     if (response.retryAfterSeconds != null) throw new Error(`Too many checks. Retry in ${response.retryAfterSeconds} seconds. Your progress is saved.`);
@@ -43,5 +44,5 @@ export function useGame(puzzleId: string, onComplete: () => void) {
     return response.correct;
   }), [puzzleId, enqueue, apply]);
   const hint = useCallback((index: number) => enqueue(async () => { apply(await revealHint(puzzleId, index)); }), [puzzleId, enqueue, apply]);
-  return { state, error, resume, checkWord, hint };
+  return { state, error, resume, pause, checkWord, hint };
 }

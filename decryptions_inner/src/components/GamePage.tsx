@@ -9,30 +9,39 @@ import { InstructionsDialog } from './InstructionsDialog';
 import { Leaderboard } from './Leaderboard';
 import { AccountMenu } from './AccountMenu';
 import { Button } from './ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 
 export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary; onHome: () => void; onArchive: () => void }) {
   const { refreshProgress } = useAuth();
-  const [hidden, setHidden] = useState(false);
   const [share, setShare] = useState(false);
   const [results, setResults] = useState(false);
-  const [leave, setLeave] = useState<'home' | 'archive' | null>(null);
+  const [changingTimer, setChangingTimer] = useState(false);
   const game = useGame(puzzle.id, () => { setShare(true); void refreshProgress(); });
   const state = game.state;
   const result = state?.result;
-  const navigate = (target: 'home' | 'archive') => {
-    if (state && !state.completed) setLeave(target);
-    else (target === 'home' ? onHome : onArchive)();
+  const navigate = async (target: 'home' | 'archive') => {
+    if (changingTimer) return;
+    setChangingTimer(true);
+    if (state && !state.completed && !state.paused && !(await game.pause())) {
+      setChangingTimer(false);
+      return;
+    }
+    (target === 'home' ? onHome : onArchive)();
+  };
+  const togglePause = async () => {
+    if (!state || state.completed || changingTimer) return;
+    setChangingTimer(true);
+    if (state.paused) await game.resume();
+    else await game.pause();
+    setChangingTimer(false);
   };
   return <div className="min-h-app bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
     <header className="border-b bg-white/80 px-4 py-3 shadow-sm">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
-        <button className="mr-auto text-xl font-semibold text-primary" onClick={() => navigate('home')}>Decryptions</button>
+        <button className="mr-auto text-xl font-semibold text-primary" onClick={() => void navigate('home')}>Decryptions</button>
         {state && <Timer state={state} />}
-        {state && !state.completed && <Button variant="outline" size="sm" onClick={() => setHidden(h => !h)}>{hidden ? 'Show puzzle' : 'Hide puzzle'}</Button>}
+        {state && !state.completed && <Button variant="outline" size="sm" disabled={changingTimer} onClick={() => void togglePause()}>{state.paused ? 'Resume' : 'Pause'}</Button>}
         <InstructionsDialog />
-        <Button variant="outline" size="sm" onClick={() => navigate('archive')}>Archive</Button>
+        <Button variant="outline" size="sm" disabled={changingTimer} onClick={() => void navigate('archive')}>Archive</Button>
         <AccountMenu />
       </div>
     </header>
@@ -42,9 +51,9 @@ export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary;
       {game.error && <div role="alert" className="text-center text-red-700"><p>{game.error}</p><Button variant="outline" onClick={() => void game.resume()}>Retry connection</Button></div>}
       {!state && !game.error && <p role="status">Starting your puzzle…</p>}
       {state && <>
-        {!state.completed && <p className="text-center text-xs text-muted-foreground">Time keeps running when you hide the puzzle or leave. Returning resumes this attempt.</p>}
-        {hidden && !state.completed && <div className="rounded-xl bg-white p-8 text-center"><h2 className="text-lg font-semibold">Puzzle hidden</h2><p>Your timer is still running.</p><Button className="mt-4" onClick={() => setHidden(false)}>Show puzzle</Button></div>}
-        <div className={hidden && !state.completed ? 'hidden' : 'w-full'}>
+        {!state.completed && <p className="text-center text-xs text-muted-foreground">Pause whenever you need a break. Leaving through Decryptions or Archive also pauses the timer.</p>}
+        {state.paused && !state.completed && <div className="rounded-xl bg-white p-8 text-center"><h2 className="text-lg font-semibold">Puzzle paused</h2><p>Your timer is stopped.</p><Button className="mt-4" disabled={changingTimer} onClick={() => void togglePause()}>Resume puzzle</Button></div>}
+        <div className={state.paused && !state.completed ? 'hidden' : 'w-full'}>
           <RebusPuzzle words={state.words} completed={state.completed} checkWord={game.checkWord} revealHint={game.hint} />
         </div>
         {result && <>
@@ -63,12 +72,5 @@ export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary;
         </>}
       </>}
     </main>
-    <AlertDialog open={leave != null} onOpenChange={open => { if (!open) setLeave(null); }}>
-      <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Leave this puzzle?</AlertDialogTitle>
-        <AlertDialogDescription>Your progress is saved. The timer will keep running until you finish.</AlertDialogDescription>
-      </AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Stay</AlertDialogCancel>
-        <AlertDialogAction onClick={() => { const target = leave; setLeave(null); (target === 'archive' ? onArchive : onHome)(); }}>Leave</AlertDialogAction>
-      </AlertDialogFooter></AlertDialogContent>
-    </AlertDialog>
   </div>;
 }

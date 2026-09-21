@@ -6,11 +6,11 @@ import { execFile } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { createDatabase, ids, puzzles, rpc, migration } from './database.mjs';
+import { createDatabase, ids, puzzles, rpc, migration, pauseMigration } from './database.mjs';
 import { importPuzzles, validatePuzzles } from '../scripts/import-puzzles.mjs';
 
 const denied = promise => assert.rejects(promise, error => error.code === '42501');
-test('legacy export preserves all published puzzles through September 15 without overwriting private data', async () => {
+test('legacy export preserves retained published puzzles without overwriting private data', async () => {
   const privateRoot = fileURLToPath(new URL('../private/', import.meta.url));
   await mkdir(privateRoot, { recursive: true });
   const work = await mkdtemp(join(privateRoot, 'legacy-export-test-'));
@@ -22,8 +22,8 @@ test('legacy export preserves all published puzzles through September 15 without
     const original = await readFile(seed, 'utf8');
     const rows = JSON.parse(original);
     validatePuzzles(rows);
-    assert.equal(rows.length, 12);
-    assert(rows.some(p => p.date === '2026-09-15' && p.legacyId === '2026-09-15-court-blocks-mail-ballot-limits'));
+    assert.equal(rows.length, 11);
+    assert(!rows.some(p => p.date === '2026-09-15' || p.legacyId === '2026-09-15-court-blocks-mail-ballot-limits'));
     assert.equal((await stat(seed)).mode & 0o777, 0o600);
     await assert.rejects(run(process.execPath, [script], { cwd: work }), /EEXIST/);
     assert.equal(await readFile(seed, 'utf8'), original);
@@ -106,6 +106,15 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       const independent = await rpc(bob, 'start_puzzle', [ids.daily]);
       assert.equal(independent.words[0].acceptedAnswer, null); assert.equal(independent.hintsUsed, 0);
     });
+    await t.test('pausing freezes server time and resuming excludes the paused interval', async () => {
+      await db.admin.query("update private.attempts set started_at = clock_timestamp() - interval '120 seconds' where user_id = $1 and puzzle_id = $2", [ids.bob, ids.daily]);
+      const paused = await rpc(bob, 'pause_puzzle', [ids.daily]);
+      assert.equal(paused.paused, true); assert(paused.elapsedSeconds >= 120 && paused.elapsedSeconds < 123);
+      await db.admin.query("update private.attempts set started_at = started_at - interval '30 seconds', paused_at = paused_at - interval '30 seconds' where user_id = $1 and puzzle_id = $2", [ids.bob, ids.daily]);
+      const resumed = await rpc(bob, 'start_puzzle', [ids.daily]);
+      assert.equal(resumed.paused, false);
+      assert(resumed.elapsedSeconds >= paused.elapsedSeconds && resumed.elapsedSeconds <= paused.elapsedSeconds + 1);
+    });
     await t.test('concurrent final checks produce one immutable, server-timed solve and progress row', async () => {
       await db.admin.query("update private.attempts set started_at = clock_timestamp() - interval '90 seconds' where user_id = $1", [ids.alice]);
       const [a, b] = await Promise.all([rpc(alice, 'submit_word', [ids.daily, 1, 'NEWS']), rpc(aliceTab, 'submit_word', [ids.daily, 1, 'NEWS'])]);
@@ -151,7 +160,7 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       await rpc(bob, 'submit_word', [ids.archive, 0, 'PRIVATE']);
       const solved = await rpc(bob, 'submit_word', [ids.archive, 1, 'STORY']);
       assert(solved.state.completed && solved.state.result.verified);
-      await db.admin.query(migration); await importPuzzles(db.admin, puzzles);
+      await db.admin.query(migration); await db.admin.query(pauseMigration); await importPuzzles(db.admin, puzzles);
       const accounts = await readFile(new URL('../supabase/2026-09-05-accounts.sql', import.meta.url), 'utf8');
       await assert.rejects(db.admin.query(accounts), /do not reapply/);
       await db.admin.query('rollback');

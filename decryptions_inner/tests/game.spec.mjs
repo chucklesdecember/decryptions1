@@ -31,7 +31,7 @@ async function player(browser, userId = ids.alice, loggedIn = true, returningDev
     try {
       if (url.pathname.includes('/rpc/')) {
         const p = request.postDataJSON() ?? {};
-        const args = name === 'submit_word' ? [p.p_puzzle_id, p.p_word_index, p.p_guess] : name === 'reveal_hint' ? [p.p_puzzle_id, p.p_word_index] : ['start_puzzle', 'get_leaderboard'].includes(name) ? [p.p_puzzle_id] : [];
+        const args = name === 'submit_word' ? [p.p_puzzle_id, p.p_word_index, p.p_guess] : name === 'reveal_hint' ? [p.p_puzzle_id, p.p_word_index] : ['start_puzzle', 'pause_puzzle', 'get_leaderboard'].includes(name) ? [p.p_puzzle_id] : [];
         body = name === 'username_status' ? 'available' : await rpc(request.headers().authorization === 'Bearer test-anon-key' ? anon : client, name, args);
         responses.push({ name, body, params: p });
         if (name === 'submit_word' && behavior.loseNextWordResponse) { behavior.loseNextWordResponse = false; return route.abort(); }
@@ -81,11 +81,12 @@ test('daily play resists local score/clock edits, resumes across devices, and re
     await a.page.getByRole('button', { name: 'Show hint', exact: true }).nth(1).click();
     await expect(a.page.getByText('Second private hint', { exact: true })).toBeVisible();
     await a.page.keyboard.press('Escape');
-    await a.page.getByRole('button', { name: 'Hide puzzle', exact: true }).click();
-    await expect(a.page.getByRole('heading', { name: 'Puzzle hidden' })).toBeVisible();
+    await a.page.getByRole('button', { name: 'Pause', exact: true }).click();
+    await expect(a.page.getByRole('heading', { name: 'Puzzle paused' })).toBeVisible();
+    await expect(a.page.getByText('Your timer is stopped.', { exact: true })).toBeVisible();
     await expect(a.page.getByLabel('Elapsed time')).toContainText('2:');
     await a.page.getByRole('button', { name: 'Decryptions', exact: true }).click();
-    await a.page.getByRole('button', { name: 'Leave', exact: true }).click();
+    await expect(a.page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
     await a.page.reload();
     await a.page.getByRole('button', { name: 'Play', exact: true }).click();
     await expect(a.page.getByRole('textbox', { name: 'Word 1', exact: true })).toHaveValue('HIDDEN');
@@ -103,6 +104,7 @@ test('daily play resists local score/clock edits, resumes across devices, and re
       await expect(b.page.getByText('Using 1 hint', { exact: true })).toBeVisible();
       await b.page.keyboard.press('Escape');
       await expect(b.page.getByRole('heading', { name: 'Hidden News', exact: true })).toBeVisible();
+      await expect(b.page.getByRole('link', { name: 'Read article', exact: true })).toHaveAttribute('href', 'https://example.com/private-headline');
       const result = (await db.admin.query('select * from public.solves where user_id=$1', [ids.alice])).rows;
       expect(result).toHaveLength(1); expect(result[0].verified).toBe(true); expect(result[0].time_seconds).toBeGreaterThanOrEqual(120);
       await b.page.getByRole('button', { name: 'Leaderboard', exact: true }).click();

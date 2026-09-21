@@ -5,9 +5,10 @@ import { formatTime, type GameState } from '../lib/gameApi';
 export function Timer({ state }: { state: GameState }) {
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
-    const base = state.startedAt ? Math.max(0, Date.parse(state.serverNow) - Date.parse(state.startedAt)) : 0;
+    const base = state.result?.timeSeconds ?? state.elapsedSeconds;
     const anchor = performance.now();
-    const update = () => setSeconds(state.result?.timeSeconds ?? Math.floor((base + performance.now() - anchor) / 1000));
+    const update = () => setSeconds(state.result?.timeSeconds ?? (state.paused
+      ? base : base + Math.floor((performance.now() - anchor) / 1000)));
     update();
     const interval = window.setInterval(update, 250);
     return () => window.clearInterval(interval);

@@ -30,7 +30,7 @@ export function ArchiveList({ puzzles, onBack, onPlay }: {
       {!puzzles.length && <p>No past puzzles are available yet.</p>}
       {preview ? <>
         <h2 className="text-lg font-semibold">{formatPuzzleDate(preview.date)}</h2><p>{preview.category}</p>
-        <p>Time starts when you open the clues and keeps running until you solve.</p>
+        <p>Time starts when you open the clues. You can pause at any time.</p>
         <Button onClick={() => onPlay(preview)}>{progress.some(p => p.puzzleId === preview.id) ? 'View solved puzzle' : 'Play puzzle'}</Button>
         <Leaderboard puzzleId={preview.id} myRowId={progress.find(p => p.puzzleId === preview.id)?.rowId} />
       </> : puzzles.map(p => <button key={p.id} onClick={() => setPreview(p)}

@@ -9,7 +9,8 @@ const source = execFileSync('git', ['show',
   '1bf31ad1215f6ee7e1e29fc8e5984325f68438ea:decryptions_inner/src/data/puzzles.ts'], { encoding: 'utf8' });
 const js = transpileModule(source, { compilerOptions: { module: 99, target: 99 } }).outputText;
 const { puzzles } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`);
-const rows = puzzles.map(p => ({
+const retired = new Set(['2026-09-15-court-blocks-mail-ballot-limits']);
+const rows = puzzles.filter(p => !retired.has(p.id)).map(p => ({
   id: randomUUID(), legacyId: p.id, date: p.id.slice(0, 10), category: p.category,
   headline: p.headline, articleUrl: p.articleUrl ?? null, words: p.words, hints: p.hints,
 }));

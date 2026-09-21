@@ -8,6 +8,7 @@ export function validatePuzzles(rows) {
   for (const p of rows) {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(p.id ?? '') || ids.has(p.id)) throw new Error('Puzzle IDs must be unique UUIDs');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(p.date ?? '') || new Date(p.date).toISOString().slice(0, 10) !== p.date || dates.has(p.date)) throw new Error('Puzzle dates must be unique ISO dates');
+    if (p.availableDate != null && (!/^\d{4}-\d{2}-\d{2}$/.test(p.availableDate) || new Date(p.availableDate).toISOString().slice(0, 10) !== p.availableDate || p.availableDate > p.date)) throw new Error('Available date must be a valid ISO date no later than the puzzle date');
     if (typeof p.category !== 'string' || !p.category.trim() || typeof p.headline !== 'string' || !p.headline.trim()) throw new Error('Category and headline are required');
     if (p.articleUrl != null && !/^https?:\/\//.test(p.articleUrl)) throw new Error('Article URL must use HTTP(S)');
     if (!Array.isArray(p.words) || !p.words.length || p.words.length > 30 || !Array.isArray(p.hints) || p.hints.length !== p.words.length) throw new Error('Expected 1–30 words with matching hints');
@@ -37,20 +38,21 @@ export async function importPuzzles(client, rows) {
       const old = (await client.query('select * from private.puzzles where id = $1', [id])).rows[0];
       const words = p.words.map(w => ({ answer: w.answer, clues: w.clues.map(c => ({ type: c.type, content: c.content, ...(c.alt == null ? {} : { alt: c.alt }) })) }));
       if (old) {
-        const changed = (await client.query(`select not (publish_date = $2::date and category = $3 and headline = $4
-          and article_url is not distinct from $5 and words = $6::jsonb and hints = $7::jsonb) as changed
-          from private.puzzles where id = $1`, [id, p.date, p.category, p.headline, p.articleUrl ?? null, JSON.stringify(words), JSON.stringify(p.hints)])).rows[0].changed;
+        const changed = (await client.query(`select not (publish_date = $2::date and available_on is not distinct from $3::date
+          and category = $4 and headline = $5 and article_url is not distinct from $6
+          and words = $7::jsonb and hints = $8::jsonb) as changed
+          from private.puzzles where id = $1`, [id, p.date, p.availableDate ?? null, p.category, p.headline, p.articleUrl ?? null, JSON.stringify(words), JSON.stringify(p.hints)])).rows[0].changed;
         if (changed && (await client.query(`select exists(select 1 from private.attempts where puzzle_id = $1::uuid)
           or exists(select 1 from public.solves where puzzle_id = $1::text)
           or exists(select 1 from public.progress where puzzle_id = $1::text) as active`, [id])).rows[0].active) {
           throw new Error('Cannot change a puzzle after play or legacy completion; create a new puzzle instead');
         }
       }
-      await client.query(`insert into private.puzzles(id, publish_date, category, headline, article_url, words, hints)
-        values($1, $2, $3, $4, $5, $6, $7) on conflict(id) do update set
-        publish_date = excluded.publish_date, category = excluded.category, headline = excluded.headline,
-        article_url = excluded.article_url, words = excluded.words, hints = excluded.hints`,
-      [id, p.date, p.category, p.headline, p.articleUrl ?? null, JSON.stringify(words), JSON.stringify(p.hints)]);
+      await client.query(`insert into private.puzzles(id, publish_date, available_on, category, headline, article_url, words, hints)
+        values($1, $2, $3, $4, $5, $6, $7, $8) on conflict(id) do update set
+        publish_date = excluded.publish_date, available_on = excluded.available_on, category = excluded.category,
+        headline = excluded.headline, article_url = excluded.article_url, words = excluded.words, hints = excluded.hints`,
+      [id, p.date, p.availableDate ?? null, p.category, p.headline, p.articleUrl ?? null, JSON.stringify(words), JSON.stringify(p.hints)]);
       if (p.legacyId) {
         await client.query('insert into private.puzzle_legacy_ids values($1, $2) on conflict(legacy_id) do nothing', [p.legacyId, id]);
         await client.query('update public.solves set puzzle_id = $1 where puzzle_id = $2', [id, p.legacyId]);
