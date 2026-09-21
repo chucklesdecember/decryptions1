@@ -164,8 +164,8 @@ test('password login and account creation can play immediately', async ({ browse
   const signup = await player(browser, ids.bob, false, false);
   try {
     await signup.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
-    await signup.page.getByRole('textbox', { name: 'Username', exact: true }).fill('bob');
     await signup.page.getByRole('textbox', { name: 'Email', exact: true }).fill('new@example.com');
+    await expect(signup.page.getByText('Your username: new', { exact: true })).toBeVisible();
     await signup.page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
     await signup.page.getByRole('button', { name: 'Create account', exact: true }).click();
     await expect(signup.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
@@ -182,9 +182,8 @@ test('password login and account creation can play immediately', async ({ browse
     await guest.page.getByRole('button', { name: 'Play', exact: true }).click();
     await expect(guest.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
     await guest.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
-    await expect(guest.page.getByRole('textbox', { name: 'Username', exact: true })).toHaveValue('bob');
-    await expect(guest.page.getByRole('textbox', { name: 'Username', exact: true })).toBeDisabled();
     await guest.page.getByRole('textbox', { name: 'Email', exact: true }).fill('guest@example.com');
+    await expect(guest.page.getByText('Your username: guest', { exact: true })).toBeVisible();
     await guest.page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
     await guest.page.getByRole('button', { name: 'Create account', exact: true }).click();
     await expect(guest.page.getByText('Account created. You can play now.')).toBeVisible();

@@ -29,6 +29,7 @@ export const puzzles = [
 export const migration = await readFile(new URL('../supabase/2026-09-06-authoritative-game.sql', import.meta.url), 'utf8');
 export const pauseMigration = await readFile(new URL('../supabase/2026-09-21-pausable-timer.sql', import.meta.url), 'utf8');
 export const passwordMigration = await readFile(new URL('../supabase/2026-09-21-password-auth.sql', import.meta.url), 'utf8');
+export const emailUsernameMigration = await readFile(new URL('../supabase/2026-09-21-email-derived-usernames.sql', import.meta.url), 'utf8');
 
 async function freePort() {
   const server = net.createServer();
@@ -83,6 +84,7 @@ export async function createDatabase() {
       await admin.query('insert into auth.users(id, email, raw_user_meta_data) values($1, $2, $3)', [id, `${name}@example.com`, JSON.stringify({ username: name })]);
     }
     await admin.query(passwordMigration);
+    await admin.query(emailUsernameMigration);
     await admin.query('alter table public.solves disable trigger solves_set_owner_trg');
     await admin.query(`insert into public.solves(puzzle_id, display_name, time_seconds, user_id) values
       ($1, 'legacy', 2, $2), ($1, 'anonymous-old', 1, null)`, [puzzles[0].legacyId, ids.legacy]);

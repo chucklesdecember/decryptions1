@@ -12,7 +12,7 @@ This change builds on account PR #5. Test in a separate Supabase staging project
 4. Apply `2026-09-20-passwordless-auth.sql` to keep private profile emails synchronized.
 5. Apply `2026-09-21-guest-archive.sql`, then `2026-09-21-pausable-timer.sql`.
 6. Apply `2026-09-21-remove-september-15.sql` on projects that previously imported the retired September 15 puzzle.
-7. Apply `2026-09-21-password-auth.sql` for username-or-email password login.
+7. Apply `2026-09-21-password-auth.sql`, then `2026-09-21-email-derived-usernames.sql` for username-or-email password login and email-derived names.
 8. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
 9. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
 10. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
@@ -67,7 +67,7 @@ Legacy scores remain ranked and unverified, including potentially forged histori
 
 ## Account settings
 
-Accounts use a username, email, and password. Enable **Anonymous Sign-Ins** and **Email** in Supabase Auth, and disable **Confirm email** so account creation signs the player in immediately. The signup email is intentionally unverified and is used for password resets and Decryptions announcements. Returning players may sign in with either their username or email plus password; the small security-definer lookup in `2026-09-21-password-auth.sql` maps a username to its account email before Supabase performs password verification. Configure the Site URL and allowed redirect URLs for production, staging, and local origins so password-reset links return to the app.
+Accounts use an email and password. A new account's public username is automatically the portion of its email before `@`; it is never entered manually. Existing players retain their historic usernames. Enable **Anonymous Sign-Ins** and **Email** in Supabase Auth, and disable **Confirm email** so account creation signs the player in immediately. The signup email is intentionally unverified and is used for password resets and Decryptions announcements. Returning players may sign in with either their username or email plus password; the small security-definer lookup in `2026-09-21-password-auth.sql` maps a username to its account email before Supabase performs password verification. Configure the Site URL and allowed redirect URLs for production, staging, and local origins so password-reset links return to the app.
 
 Anonymous users are upgraded in place with `updateUser({ email, password })`, preserving their progress and scores. Anonymous users use the `authenticated` database role, which is intentional here because newly created players may begin immediately.
 

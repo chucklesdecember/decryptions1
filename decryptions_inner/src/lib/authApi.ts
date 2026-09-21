@@ -14,6 +14,7 @@ export type AuthKind = "signup" | "login" | "guest";
 
 export const USERNAME_MIN = 2;
 export const USERNAME_MAX = 24;
+export const EMAIL_USERNAME_MAX = 64;
 
 export function mapAuthError(error: unknown): string {
   const raw =
@@ -29,8 +30,8 @@ export function mapAuthError(error: unknown): string {
   ) {
     return "An account with this email already exists. Log in instead.";
   }
-  if (message.includes("database error saving new user")) {
-    return "That username was just taken. Try another.";
+  if (message.includes("database error saving new user") || message.includes("profiles_username_lower_key")) {
+    return "That email's username prefix is already in use. Use a different email address.";
   }
   if (message.includes("anonymous sign-ins are disabled")) {
     return "Account creation is not enabled yet. Please try again later.";
@@ -183,6 +184,16 @@ export function validateUsername(username: string): string | null {
   if (trimmed.length < USERNAME_MIN) return `Username must be at least ${USERNAME_MIN} characters.`;
   if (trimmed.length > USERNAME_MAX) return `Username must be ${USERNAME_MAX} characters or fewer.`;
   return null;
+}
+
+/** Account leaderboard names are intentionally derived, never entered manually. */
+export function usernameFromEmail(email: string): string | null {
+  const trimmed = email.trim();
+  const at = trimmed.indexOf("@");
+  if (at < 1) return null;
+  const username = trimmed.slice(0, at);
+  if (username.length > EMAIL_USERNAME_MAX) return null;
+  return username;
 }
 
 export function validatePassword(password: string): string | null {
