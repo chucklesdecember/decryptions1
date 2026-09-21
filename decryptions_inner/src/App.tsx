@@ -6,7 +6,6 @@ import { InstructionsDialog } from './components/InstructionsDialog';
 import { Button } from './components/ui/button';
 import { useAuth } from './lib/auth';
 import { formatPuzzleDate, listPuzzles, type PuzzleSummary } from './lib/gameApi';
-import { takePuzzleForEmailConfirmation } from './lib/decryptionsStorage';
 
 type Selection = { puzzle: PuzzleSummary; userId: string };
 
@@ -29,13 +28,6 @@ export default function App() {
   useEffect(() => {
     if (auth.status === 'signed_out') { setSelected(null); setFirstPuzzle(null); }
   }, [auth.status]);
-  useEffect(() => {
-    if (!auth.user || auth.isGuest || !puzzles.length) return;
-    const destination = takePuzzleForEmailConfirmation();
-    if (!destination) return;
-    const puzzle = destination === 'daily' ? puzzles[0] : puzzles.find(item => item.id === destination);
-    if (puzzle) setSelected({ puzzle, userId: auth.user.id });
-  }, [auth.user?.id, auth.isGuest, puzzles]);
   const play = (puzzle: PuzzleSummary) => auth.requirePlayer((kind, userId) => {
     if (kind === 'signup' || kind === 'guest') setFirstPuzzle({ puzzle, userId });
     else setSelected({ puzzle, userId });

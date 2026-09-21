@@ -8,6 +8,7 @@ import type { ProgressRow } from './gameApi';
 import { clearLocalProgress, markAccountUsedOnDevice } from './decryptionsStorage';
 import { AuthDialog } from '../components/AuthDialog';
 import { GuestDialog } from '../components/GuestDialog';
+import { PasswordRecoveryDialog } from '../components/PasswordRecoveryDialog';
 import { Toaster } from '../components/ui/sonner';
 
 export type AuthStatus = 'loading' | 'signed_out' | 'signed_in' | 'unavailable';
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [guestDialogOpen, setGuestDialogOpen] = useState(false);
+  const [recoveryDialogOpen, setRecoveryDialogOpen] = useState(false);
   const userRef = useRef<User | null>(null);
   const epoch = useRef(0);
   const syncJob = useRef<Promise<boolean> | null>(null);
@@ -76,11 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void supabase.auth.getSession().then(({ data, error }) => {
       if (active && !authEventSeen) acceptUser(error ? null : data.session?.user ?? null);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       authEventSeen = true;
       if (!active) return;
       // Never await Supabase requests inside the auth listener.
       acceptUser(session?.user ?? null);
+      if (event === 'PASSWORD_RECOVERY') setRecoveryDialogOpen(true);
     });
     return () => { active = false; epoch.current++; sub.subscription.unsubscribe(); };
   }, [acceptUser]);
@@ -107,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!(await sync()) || userRef.current?.id !== u.id) return;
     setDialogOpen(false);
     if (kind === 'signup') {
-      toast.success('You can play now. Check your email to confirm your account.');
+      toast.success('Account created. You can play now.');
     }
     const cb = pendingSuccess.current; pendingSuccess.current = null; cb?.(kind, u.id);
   }, [acceptUser, sync]);
@@ -133,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       <GuestDialog open={guestDialogOpen}
         onOpenChange={open => { setGuestDialogOpen(open); if (!open) pendingSuccess.current = null; }}
         onStarted={handleGuestStarted} />
+      <PasswordRecoveryDialog open={recoveryDialogOpen} onOpenChange={setRecoveryDialogOpen} />
     </>}
     <Toaster richColors position="top-center" />
   </AuthContext.Provider>;

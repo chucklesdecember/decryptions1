@@ -32,6 +32,8 @@ interface ShareDialogProps {
   /** Server-confirmed leaderboard row; used to slice the leaderboard */
   playerRowId: string | null;
   onLeaderboard?: () => void;
+  isGuest?: boolean;
+  onRequireAccount?: () => void;
 }
 
 function formatTime(seconds: number) {
@@ -73,6 +75,8 @@ export function ShareDialog({
   articleUrl,
   playerRowId,
   onLeaderboard,
+  isGuest = false,
+  onRequireAccount,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [placementLoading, setPlacementLoading] = useState(false);
@@ -166,7 +170,7 @@ export function ShareDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>🎉 Puzzle Solved!</DialogTitle>
+          <DialogTitle>Puzzle solved</DialogTitle>
           <DialogDescription>
             Share your results with friends and challenge them to beat your time!
           </DialogDescription>
@@ -211,6 +215,7 @@ export function ShareDialog({
           )}
 
           <div className="flex flex-col gap-3">
+            {isGuest && <Button className="min-h-[52px] text-base font-bold" onClick={onRequireAccount}>Create account to save your play</Button>}
             {onLeaderboard && (
               <button
                 type="button"
@@ -244,7 +249,9 @@ export function ShareDialog({
                 <Share2 className="w-4 h-4" />
                 Share Result
               </Button>
-              {articleUrl ? (
+              {articleUrl && isGuest ? (
+                <Button variant="outline" className="gap-2 sm:min-w-[100px]" onClick={onRequireAccount}>Create account</Button>
+              ) : articleUrl ? (
                 <Button variant="outline" className="gap-2 sm:min-w-[100px]" asChild>
                   <a
                     href={articleUrl}

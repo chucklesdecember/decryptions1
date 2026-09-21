@@ -60,8 +60,9 @@ export async function checkUsername(name: string): Promise<UsernameStatus> {
   return (data as UsernameStatus) ?? "available";
 }
 
-interface PasswordlessParams {
+interface AuthParams {
   email: string;
+  password: string;
   captchaToken?: string;
 }
 
@@ -72,53 +73,63 @@ export function authRedirectUrl(): string {
   return configured || PRODUCTION_AUTH_REDIRECT;
 }
 
-export async function sendLoginLink(
-  params: PasswordlessParams,
-): Promise<{ ok: true } | { ok: false; message: string }> {
+export async function loginWithPassword(params: {
+  identifier: string;
+  password: string;
+  captchaToken?: string;
+}): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
   if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
-  const { error } = await supabase.auth.signInWithOtp({
-    email: params.email.trim(),
-    options: {
-      shouldCreateUser: false,
-      emailRedirectTo: authRedirectUrl(),
-      captchaToken: params.captchaToken,
-    },
+  const identifier = params.identifier.trim();
+  if (!identifier) return { ok: false, message: "Enter your username or email." };
+  const { data: email, error: lookupError } = await supabase.rpc("login_email_for_identifier", { p_identifier: identifier });
+  if (lookupError) return { ok: false, message: mapAuthError(lookupError) };
+  if (!email) return { ok: false, message: "Incorrect username, email, or password." };
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email as string,
+    password: params.password,
+    options: { captchaToken: params.captchaToken },
   });
   if (error) return { ok: false, message: mapAuthError(error) };
-  return { ok: true };
+  if (!data.user || !data.session) return { ok: false, message: "Could not log in. Try again." };
+  return { ok: true, user: data.user };
 }
 
-export async function createPasswordlessAccount(params: PasswordlessParams & {
+export async function createPasswordAccount(params: AuthParams & {
   username: string;
 }): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
   if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
 
   const current = (await supabase.auth.getUser()).data.user;
-  let anonymous = current;
-  if (!anonymous?.is_anonymous) {
-    const { data, error } = await supabase.auth.signInAnonymously({
-      options: {
-        data: { username: params.username.trim() },
-        captchaToken: params.captchaToken,
-      },
+  if (current?.is_anonymous) {
+    const { data, error } = await supabase.auth.updateUser({
+      email: params.email.trim(),
+      password: params.password,
+      data: { username: params.username.trim() },
     });
     if (error) return { ok: false, message: mapAuthError(error) };
-    anonymous = data.user;
+    return { ok: true, user: data.user ?? current };
   }
-  if (!anonymous) return { ok: false, message: "Account creation did not complete. Try again." };
+  const { data, error } = await supabase.auth.signUp({
+    email: params.email.trim(), password: params.password,
+    options: { data: { username: params.username.trim() }, captchaToken: params.captchaToken },
+  });
+  if (error) return { ok: false, message: mapAuthError(error) };
+  if (!data.user || !data.session) return { ok: false, message: "Your account was created but could not be started. Please log in." };
+  return { ok: true, user: data.user };
+}
 
-  const { data: linked, error: linkError } = await supabase.auth.updateUser(
-    {
-      email: params.email.trim(),
-      data: { username: params.username.trim() },
-    },
-    { emailRedirectTo: authRedirectUrl() },
-  );
-  if (linkError) {
-    return { ok: false, message: mapAuthError(linkError) };
-  }
+export async function sendPasswordReset(email: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirectUrl() });
+  if (error) return { ok: false, message: mapAuthError(error) };
+  return { ok: true };
+}
 
-  return { ok: true, user: linked.user ?? anonymous };
+export async function updatePassword(password: string): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { ok: false, message: mapAuthError(error) };
+  return { ok: true };
 }
 
 export async function createGuest(params: {
@@ -171,5 +182,11 @@ export function validateUsername(username: string): string | null {
   if (!trimmed) return "Choose a username.";
   if (trimmed.length < USERNAME_MIN) return `Username must be at least ${USERNAME_MIN} characters.`;
   if (trimmed.length > USERNAME_MAX) return `Username must be ${USERNAME_MAX} characters or fewer.`;
+  return null;
+}
+
+export function validatePassword(password: string): string | null {
+  if (!password) return "Enter a password.";
+  if (password.length < 8) return "Password must be at least 8 characters.";
   return null;
 }

@@ -9,12 +9,13 @@ This change builds on account PR #5. Test in a separate Supabase staging project
 1. For an empty project, apply `000-initial-solves.sql`. Existing projects already have this table. Apply `add-hints-used-column.sql` if the column is missing.
 2. Apply `2026-09-05-accounts.sql` if the account migration has not been applied.
 3. Apply `2026-09-06-authoritative-game.sql` using the Supabase SQL Editor or your migration runner. This migration is transactional and repeatable; it removes all old `solves`/`progress` policies, revokes direct client table access, and removes `claim_solves`. **Do not rerun the older accounts migration afterward.**
-4. Apply `2026-09-20-passwordless-auth.sql` to keep the private profile email synchronized after confirmation.
+4. Apply `2026-09-20-passwordless-auth.sql` to keep private profile emails synchronized.
 5. Apply `2026-09-21-guest-archive.sql`, then `2026-09-21-pausable-timer.sql`.
 6. Apply `2026-09-21-remove-september-15.sql` on projects that previously imported the retired September 15 puzzle.
-7. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
-8. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
-9. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
+7. Apply `2026-09-21-password-auth.sql` for username-or-email password login.
+8. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
+9. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
+10. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
 
 Rollback: retain the database restrictions and take the game offline while correcting the frontend or migration. Restoring the old frontend alone cannot submit scores. Do not restore permissive grants/policies as a workaround.
 
@@ -66,9 +67,9 @@ Legacy scores remain ranked and unverified, including potentially forged histori
 
 ## Account settings
 
-Accounts are passwordless. Enable **Anonymous Sign-Ins**, **Email**, and manual identity linking in Supabase Auth. New players receive an authenticated anonymous session immediately; the app then calls `updateUser({ email })` so Supabase sends an email confirmation and preserves the same user ID, progress, and scores. Returning players use an email magic link. Keep email confirmation enabled, configure the Site URL and allowed redirect URLs for production, staging, and local origins, and verify actual delivery on staging. If Secure Email Change causes dual-confirmation behavior, disable it so only the new address must be confirmed.
+Accounts use a username, email, and password. Enable **Anonymous Sign-Ins** and **Email** in Supabase Auth, and disable **Confirm email** so account creation signs the player in immediately. The signup email is intentionally unverified and is used for password resets and Decryptions announcements. Returning players may sign in with either their username or email plus password; the small security-definer lookup in `2026-09-21-password-auth.sql` maps a username to its account email before Supabase performs password verification. Configure the Site URL and allowed redirect URLs for production, staging, and local origins so password-reset links return to the app.
 
-The auth API is deliberately separated into passwordless contact-linking functions so email can later be replaced by phone verification without changing game ownership or progress records. Anonymous users use the `authenticated` database role, which is intentional here because newly created players may begin immediately.
+Anonymous users are upgraded in place with `updateUser({ email, password })`, preserving their progress and scores. Anonymous users use the `authenticated` database role, which is intentional here because newly created players may begin immediately.
 
 For Turnstile, set the public `VITE_TURNSTILE_SITE_KEY` in Vercel and the corresponding secret in Supabase Authentication's CAPTCHA/attack-protection settings. Configure both together and include the correct widget hostnames. Auth form tokens reset after attempts and tab switches.
 
@@ -82,4 +83,4 @@ Use the real Supabase anon key and two real accounts, in separate browser profil
 - Account A's accepted words, hints, and results must not appear for account B, including when switching accounts while requests are in flight. Invalid/expired JWTs must be rejected by Supabase's gateway.
 - Both daily and archive play use the same flow. Future puzzles are absent. Unsolved payloads and built assets contain no answers, headlines, article links, unrevealed hints, or legacy slugs.
 - Imported anonymous scores remain ranked/unclaimable. Account-linked legacy solves stay completed with original times and an Unverified label; cloud-only completions do not gain scores.
-- Verify immediate play after sign-up, email confirmation, magic-link login on another device, CAPTCHA retries, progress reload, and sign-out against hosted Auth.
+- Verify immediate play after sign-up, username and email password login on another device, password reset, CAPTCHA retries, progress reload, and sign-out against hosted Auth.

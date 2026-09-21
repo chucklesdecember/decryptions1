@@ -17,7 +17,6 @@ export function Leaderboard({ puzzleId, myRowId }: { puzzleId: string; myRowId?:
   }, [puzzleId, myRowId, retry]);
   return <section className="mb-4 rounded-xl border bg-white p-4 shadow-md sm:p-5">
     <h2 className="mb-1 text-xl font-semibold">Leaderboard</h2>
-    <p className="mb-4 text-sm text-muted-foreground">Fastest times · older scores are labeled Unverified.</p>
     {loading ? <p>Loading leaderboard…</p> : error ? <div role="alert"><p>{error}</p><Button variant="outline" onClick={() => setRetry(n => n + 1)}>Retry leaderboard</Button></div> : entries.length === 0 ? <p>No solves yet. Be the first!</p> : <div className="space-y-2">
       {entries.map((entry, index) => <div key={entry.id}
         className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 ${entry.id === myRowId ? 'border-orange-400 bg-orange-50' : 'border-gray-200 bg-gray-50'}`}>
