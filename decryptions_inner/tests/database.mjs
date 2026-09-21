@@ -14,6 +14,8 @@ export const ids = {
   bob: '20000000-0000-4000-8000-000000000002',
   legacy: '20000000-0000-4000-8000-000000000003',
   cloud: '20000000-0000-4000-8000-000000000004',
+  preexistingAccount: '30000001-0000-4000-8000-000000000001',
+  preexistingGuest: '30000002-0000-4000-8000-000000000002',
 };
 // Synthetic data only. Actual puzzle seeds must stay in ignored private storage.
 export const puzzles = [
@@ -49,7 +51,13 @@ export async function createDatabase() {
     // Minimal Supabase Auth contract. Business SQL is the exact production migration.
     await admin.query(`create role anon nologin; create role authenticated nologin;
       create schema auth;
-      create table auth.users(id uuid primary key, email text, raw_user_meta_data jsonb);
+      create table auth.users(
+        id uuid primary key,
+        email text,
+        raw_user_meta_data jsonb,
+        created_at timestamptz not null default now(),
+        is_anonymous boolean not null default false
+      );
       create function auth.uid() returns uuid language sql stable as
         'select nullif(current_setting(''request.jwt.claim.sub'', true), '''')::uuid';
       create function auth.jwt() returns jsonb language sql stable as
@@ -62,12 +70,15 @@ export async function createDatabase() {
       grant all on public.solves to anon, authenticated;
       alter table public.solves enable row level security;
       create policy old_unknown_write on public.solves for all to anon, authenticated using(true) with check(true);`);
+    await admin.query(`insert into auth.users(id, email, raw_user_meta_data, is_anonymous) values
+      ($1, 'existing@example.com', '{"username":"existing"}', false),
+      ($2, '', '{"username":"existing"}', true)`, [ids.preexistingAccount, ids.preexistingGuest]);
     await admin.query(await readFile(new URL('../supabase/2026-09-05-accounts.sql', import.meta.url), 'utf8'));
     await admin.query(await readFile(new URL('../supabase/2026-09-20-passwordless-auth.sql', import.meta.url), 'utf8'));
     // Supabase usually supplies these grants through default privileges.
     await admin.query('grant select on public.profiles to authenticated; grant all on public.progress to authenticated');
     for (const [name, id] of Object.entries(ids).filter(([name]) => ['alice', 'bob', 'legacy', 'cloud'].includes(name))) {
-      await admin.query('insert into auth.users values($1, $2, $3)', [id, `${name}@example.com`, JSON.stringify({ username: name })]);
+      await admin.query('insert into auth.users(id, email, raw_user_meta_data) values($1, $2, $3)', [id, `${name}@example.com`, JSON.stringify({ username: name })]);
     }
     await admin.query('alter table public.solves disable trigger solves_set_owner_trg');
     await admin.query(`insert into public.solves(puzzle_id, display_name, time_seconds, user_id) values

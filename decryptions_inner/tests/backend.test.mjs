@@ -36,6 +36,14 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
     const anon = await db.clientFor(null, 'anon');
     const alice = await db.clientFor(ids.alice), aliceTab = await db.clientFor(ids.alice);
     const bob = await db.clientFor(ids.bob);
+    await t.test('users created before the profiles trigger are backfilled safely', async () => {
+      const profiles = (await db.admin.query(`select id, username from public.profiles
+        where id = any($1::uuid[]) order by username`, [[ids.preexistingAccount, ids.preexistingGuest]])).rows;
+      assert.deepEqual(profiles, [
+        { id: ids.preexistingAccount, username: 'existing' },
+        { id: ids.preexistingGuest, username: 'existing-30000002' },
+      ]);
+    });
     await t.test('confirmed contact email stays synchronized to the private profile', async () => {
       await db.admin.query('update auth.users set email = $1 where id = $2', ['alice+confirmed@example.com', ids.alice]);
       const profile = (await db.admin.query('select email from public.profiles where id = $1', [ids.alice])).rows[0];
@@ -72,7 +80,7 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
     });
     await t.test('guests can play the current puzzle but archived puzzles require an account', async () => {
       const guestId = randomUUID();
-      await db.admin.query('insert into auth.users values($1, $2, $3)', [guestId, '', { username: 'daily-guest' }]);
+      await db.admin.query('insert into auth.users(id, email, raw_user_meta_data) values($1, $2, $3)', [guestId, '', { username: 'daily-guest' }]);
       const guest = await db.clientFor(guestId, 'authenticated', true);
       const daily = await rpc(guest, 'start_puzzle', [ids.daily]);
       assert.equal(daily.id, ids.daily);
@@ -126,7 +134,7 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
     });
     await t.test('60 checks per account/minute across puzzles; rejected checks preserve state', async () => {
       const id = randomUUID();
-      await db.admin.query('insert into auth.users values($1, $2, $3)', [id, 'rate@example.com', { username: 'rate' }]);
+      await db.admin.query('insert into auth.users(id, email, raw_user_meta_data) values($1, $2, $3)', [id, 'rate@example.com', { username: 'rate' }]);
       const client = await db.clientFor(id), tab = await db.clientFor(id);
       await rpc(client, 'start_puzzle', [ids.daily]); await rpc(client, 'start_puzzle', [ids.archive]);
       await Promise.all([client, tab].map(async (connection, i) => {
