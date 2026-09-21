@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { LandingPage } from './components/LandingPage';
 import { ArchiveList } from './components/ArchiveView';
 import { GamePage } from './components/GamePage';
+import { StatsPage } from './components/StatsPage';
 import { InstructionsDialog } from './components/InstructionsDialog';
 import { Button } from './components/ui/button';
 import { useAuth } from './lib/auth';
@@ -16,6 +17,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
   const [archive, setArchive] = useState(false);
+  const [stats, setStats] = useState(false);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [firstPuzzle, setFirstPuzzle] = useState<Selection | null>(null);
   useEffect(() => {
@@ -32,14 +34,15 @@ export default function App() {
     if (kind === 'signup' || kind === 'guest') setFirstPuzzle({ puzzle, userId });
     else setSelected({ puzzle, userId });
   });
-  const home = () => { setSelected(null); setArchive(false); };
+  const home = () => { setSelected(null); setArchive(false); setStats(false); };
   if (selected && auth.user?.id === selected.userId) return <GamePage key={`${selected.userId}:${selected.puzzle.id}`} puzzle={selected.puzzle}
     onHome={home} onArchive={() => { setSelected(null); setArchive(true); }} />;
+  if (stats) return <StatsPage onBack={home} />;
   if (archive) return <ArchiveList puzzles={puzzles.slice(1)} onBack={home} onPlay={play} />;
   return <>
     <LandingPage puzzleDate={puzzles[0] ? formatPuzzleDate(puzzles[0].date) : ''}
       playLabel={auth.status === 'signed_in' && !auth.isGuest ? 'Play' : 'Play as guest'}
-      unavailable={!puzzles.length || !!error || auth.status === 'loading' || auth.syncing}
+      unavailable={!puzzles.length || !!error || auth.status === 'loading' || auth.syncing} onStats={() => setStats(true)}
       onStartGame={() => { if (puzzles[0]) play(puzzles[0]); }} onOpenArchive={() => setArchive(true)} />
     {(!loaded || error || !puzzles.length) && <div className="mx-auto max-w-md px-4 pb-6 text-center" role="status">
       <p>{!loaded ? 'Loading puzzles…' : error ?? 'No puzzles are available yet.'}</p>

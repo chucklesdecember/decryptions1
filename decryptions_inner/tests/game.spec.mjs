@@ -40,7 +40,8 @@ async function player(browser, userId = ids.alice, loggedIn = true, returningDev
         body = (await client.query('select * from public.profiles')).rows;
       } else if (name === 'logout') { body = {}; }
       else if (name === 'signup') { body = guestSession; }
-      else if (name === 'recover') { body = {}; }
+      else if (name === 'otp') { body = {}; }
+      else if (name === 'verify') { body = session; }
       else if (name === 'user' && request.method() === 'PUT') {
         const input = request.postDataJSON() ?? {};
         body = { user: { ...guestUser, new_email: input.email } };
@@ -140,7 +141,7 @@ test('archive does not start until Play, uses server validation, and legacy resu
   } finally { await legacy.context.close(); }
 });
 
-test('password login and account creation can play immediately', async ({ browser, request }) => {
+test('email-code account saving can play immediately', async ({ browser, request }) => {
   for (const path of ['/private/browser-test-canary.json', '/supabase/2026-09-06-authoritative-game.sql', '/scripts/import-puzzles.mjs']) {
     const response = await request.get(path);
     expect(response.status()).toBe(403);
@@ -155,9 +156,10 @@ test('password login and account creation can play immediately', async ({ browse
     await p.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
     await expect(p.page.getByRole('dialog')).toBeVisible();
     expect(p.responses.some(r => r.name === 'start_puzzle')).toBe(false);
-    await p.page.getByRole('textbox', { name: 'Username or email', exact: true }).fill('test@example.com');
-    await p.page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
-    await p.page.getByRole('button', { name: 'Log in', exact: true }).click();
+    await p.page.getByRole('textbox', { name: 'Email', exact: true }).fill('test@example.com');
+    await p.page.getByRole('button', { name: 'Email me a code', exact: true }).click();
+    await p.page.getByRole('textbox', { name: '6-digit code', exact: true }).fill('123456');
+    await p.page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(p.page.getByRole('button', { name: 'Account menu for cloud' })).toBeVisible();
   } finally { await p.context.close(); }
 
@@ -165,9 +167,9 @@ test('password login and account creation can play immediately', async ({ browse
   try {
     await signup.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
     await signup.page.getByRole('textbox', { name: 'Email', exact: true }).fill('new@example.com');
-    await expect(signup.page.getByText('Your username: new', { exact: true })).toBeVisible();
-    await signup.page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
-    await signup.page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await signup.page.getByRole('button', { name: 'Email me a code', exact: true }).click();
+    await signup.page.getByRole('textbox', { name: '6-digit code', exact: true }).fill('123456');
+    await signup.page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(signup.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
     expect(signup.responses.some(r => r.name === 'start_puzzle')).toBe(true);
   } finally { await signup.context.close(); }
@@ -183,9 +185,9 @@ test('password login and account creation can play immediately', async ({ browse
     await expect(guest.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
     await guest.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
     await guest.page.getByRole('textbox', { name: 'Email', exact: true }).fill('guest@example.com');
-    await expect(guest.page.getByText('Your username: guest', { exact: true })).toBeVisible();
-    await guest.page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
-    await guest.page.getByRole('button', { name: 'Create account', exact: true }).click();
+    await guest.page.getByRole('button', { name: 'Email me a code', exact: true }).click();
+    await guest.page.getByRole('textbox', { name: '6-digit code', exact: true }).fill('123456');
+    await guest.page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(guest.page.getByText('Account created. You can play now.')).toBeVisible();
   } finally { await guest.context.close(); }
 });

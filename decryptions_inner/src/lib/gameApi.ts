@@ -7,6 +7,10 @@ export interface ProgressRow {
   puzzleId: string; timeSeconds: number; hintsUsed: number;
   solvedAt: string; rowId: string | null; verified: boolean;
 }
+export interface AccountStats {
+  completed: number; bestSeconds: number | null; averageSeconds: number | null; totalHints: number; currentStreak: number; latestRank: number | null;
+  recent: Array<{ date: string; timeSeconds: number; hintsUsed: number }>;
+}
 export interface GameState extends PuzzleSummary {
   startedAt: string | null; serverNow: string; words: PublicWord[];
   completed: boolean; hintsUsed: number; elapsedSeconds: number; paused: boolean;
@@ -29,6 +33,7 @@ export const listPuzzles = () => gameRpc<PuzzleSummary[]>('list_puzzles');
 export const startPuzzle = (puzzleId: string) => gameRpc<GameState>('start_puzzle', { p_puzzle_id: puzzleId });
 export const pausePuzzle = (puzzleId: string) => gameRpc<GameState>('pause_puzzle', { p_puzzle_id: puzzleId });
 export const fetchProgress = () => gameRpc<ProgressRow[]>('get_my_progress');
+export const fetchAccountStats = () => gameRpc<AccountStats>('get_my_stats');
 export const revealHint = (puzzleId: string, index: number) => gameRpc<GameState>('reveal_hint', { p_puzzle_id: puzzleId, p_word_index: index });
 export const submitWord = (puzzleId: string, index: number, guess: string) =>
   gameRpc<{ state: GameState; correct: boolean; retryAfterSeconds?: never } | { retryAfterSeconds: number; state?: never; correct?: never }>(

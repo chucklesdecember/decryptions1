@@ -9,9 +9,10 @@ interface LandingPageProps {
   unavailable?: boolean;
   onStartGame: () => void;
   onOpenArchive: () => void;
+  onStats?: () => void;
 }
 
-export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, playLabel, unavailable }: LandingPageProps) {
+export function LandingPage({ onStartGame, onOpenArchive, onStats, puzzleDate, playLabel, unavailable }: LandingPageProps) {
   const [logoLoadFailed, setLogoLoadFailed] = useState(false);
 
   return (
@@ -43,7 +44,7 @@ export function LandingPage({ onStartGame, onOpenArchive, puzzleDate, playLabel,
         </h1>
 
         <div className="relative z-10 w-full px-4">
-          <AccountMenu prominent onAccountReady={onStartGame} className="h-13 w-full rounded-full border-none bg-black px-6 text-base font-semibold text-white shadow-md hover:bg-gray-800 hover:text-white" />
+          <AccountMenu prominent onAccountReady={onStartGame} onStats={onStats} className="h-13 w-full rounded-full border-none bg-black px-6 text-base font-semibold text-white shadow-md hover:bg-gray-800 hover:text-white" />
         </div>
 
         <div className="relative z-10 mb-6 mt-3 w-full px-4">

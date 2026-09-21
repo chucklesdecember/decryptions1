@@ -62,7 +62,7 @@ export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary;
           <div className="flex flex-wrap justify-center gap-2">
             <Button onClick={() => setShare(true)}>Share result</Button>
             <Button variant="outline" onClick={() => setResults(r => !r)}>Leaderboard</Button>
-            {result.articleUrl && (isGuest ? <Button variant="outline" onClick={() => requireAccount()}>Create account to read article</Button> : <Button asChild variant="outline"><a href={result.articleUrl} target="_blank" rel="noopener noreferrer">Read article</a></Button>)}
+            {result.articleUrl && <Button asChild variant="outline"><a href={result.articleUrl} target="_blank" rel="noopener noreferrer">Read article</a></Button>}
           </div>
           {results && <div className="w-full"><Leaderboard puzzleId={puzzle.id} myRowId={result.rowId} /></div>}
           <ShareDialog isOpen={share} onOpenChange={setShare} solveTime={result.timeSeconds} hintsUsed={state.hintsUsed}

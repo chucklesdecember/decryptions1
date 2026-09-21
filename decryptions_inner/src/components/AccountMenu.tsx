@@ -1,4 +1,4 @@
-import { LogIn, LogOut, UserRound } from "lucide-react";
+import { BarChart3, LogIn, LogOut, UserRound } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -15,10 +15,11 @@ interface AccountMenuProps {
   className?: string;
   prominent?: boolean;
   onAccountReady?: () => void;
+  onStats?: () => void;
 }
 
 /** Header control: "Log in" when signed out, username menu with Sign out when signed in. */
-export function AccountMenu({ className, prominent = false, onAccountReady }: AccountMenuProps) {
+export function AccountMenu({ className, prominent = false, onAccountReady, onStats }: AccountMenuProps) {
   const { status, profile, user, isGuest, requireAccount, signOut } = useAuth();
 
   if (status === "unavailable" || status === "loading") return null;
@@ -65,6 +66,7 @@ export function AccountMenu({ className, prominent = false, onAccountReady }: Ac
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {onStats && <DropdownMenuItem onSelect={onStats}><BarChart3 className="h-4 w-4" />Your stats</DropdownMenuItem>}
         <DropdownMenuItem onSelect={() => void signOut()}>
           <LogOut className="h-4 w-4" />
           Sign out

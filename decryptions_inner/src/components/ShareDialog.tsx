@@ -249,9 +249,7 @@ export function ShareDialog({
                 <Share2 className="w-4 h-4" />
                 Share Result
               </Button>
-              {articleUrl && isGuest ? (
-                <Button variant="outline" className="gap-2 sm:min-w-[100px]" onClick={onRequireAccount}>Create account</Button>
-              ) : articleUrl ? (
+              {articleUrl ? (
                 <Button variant="outline" className="gap-2 sm:min-w-[100px]" asChild>
                   <a
                     href={articleUrl}
