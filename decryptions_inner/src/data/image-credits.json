@@ -182,16 +182,16 @@
   {
     "file": "tutu-divided-by-two.png",
     "word": "TWO",
-    "source": "pixabay",
-    "sourceId": "10364649-derivative",
-    "sourceUrl": "https://pixabay.com/vectors/ballerina-dance-pink-dress-tutu-10364649/",
-    "downloadUrl": "https://pixabay.com/get/g7bf82c7a518fb1a22036cb7bfbdd74047a4c8cf0bcbed972421fbdfa9df79d4b472a547c958db409200edb57860c7c5e02bc9ff279a7e3e5bdf6c9b7a0974ab3_1280.png",
-    "author": "CreativeCanvasDesign; fraction composite by rebus-autogen",
-    "license": "Pixabay Content License",
-    "licenseUrl": "https://pixabay.com/service/license-summary/",
+    "source": "generated",
+    "sourceId": "original-tutu-fraction",
+    "sourceUrl": "",
+    "downloadUrl": "",
+    "author": "Decryptions original illustration",
+    "license": "Original game asset",
+    "licenseUrl": "",
     "attribution": "",
-    "fetchedAt": "2026-09-20T18:57:30Z",
-    "sha256": "d07b63170b6d3f6883717c674d0415f326c589e3f88ef8f3e71c8e03fc74b5a8",
+    "fetchedAt": "2026-09-21T05:54:00Z",
+    "sha256": "91a5dd21e3f0e23f44aaee4fabb3c6cec670c1dea8cc7addd844733c000a5d7a",
     "puzzleId": "2026-09-21-trump-to-arm-washington-arch"
   }
 ]
