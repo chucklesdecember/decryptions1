@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import type { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { supabase } from './supabase';
-import { fetchOwnProfile, signOut as apiSignOut, type AuthKind, type Profile } from './authApi';
+import { ensureOwnProfile, fetchOwnProfile, signOut as apiSignOut, type AuthKind, type Profile } from './authApi';
 import { cacheProgress, syncAfterSignIn } from './progressSync';
 import type { ProgressRow } from './gameApi';
 import { clearLocalProgress, markAccountUsedOnDevice } from './decryptionsStorage';
@@ -49,7 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSyncing(true);
     const job = (async () => {
       try {
-        const [p, rows] = await Promise.all([fetchOwnProfile(u.id), syncAfterSignIn()]);
+        let p = await fetchOwnProfile(u.id);
+        if (!p && await ensureOwnProfile()) p = await fetchOwnProfile(u.id);
+        const rows = await syncAfterSignIn();
         if (generation !== epoch.current) return false;
         if (!p) throw new Error('Your account profile is unavailable. Please try signing in again.');
         setProfile(p); setProgress(rows); cacheProgress(u.id, rows);

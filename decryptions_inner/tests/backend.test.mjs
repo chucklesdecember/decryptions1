@@ -58,6 +58,13 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       assert.deepEqual(guest, { username: 'temporary-name', email: 'new.player@duke.edu' });
       assert.equal(existing.username, 'alice');
     });
+    await t.test('a missing historic profile is repaired for the signed-in account', async () => {
+      await db.admin.query('delete from public.profiles where id = $1', [ids.cloud]);
+      const cloud = await db.clientFor(ids.cloud);
+      await rpc(cloud, 'ensure_my_profile');
+      const profile = (await db.admin.query('select username, email from public.profiles where id = $1', [ids.cloud])).rows[0];
+      assert.deepEqual(profile, { username: 'cloud', email: 'cloud@example.com' });
+    });
     await t.test('anonymous catalog and leaderboard expose no puzzle secrets or owners', async () => {
       const catalog = await rpc(anon, 'list_puzzles');
       assert.deepEqual(catalog.map(p => p.id), [ids.daily, ids.archive]);

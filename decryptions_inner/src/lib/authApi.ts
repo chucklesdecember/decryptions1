@@ -147,6 +147,17 @@ export async function fetchOwnProfile(userId: string): Promise<Profile | null> {
   return (data as Profile | null) ?? null;
 }
 
+/** Repairs the small number of historic Auth users created without a profile. */
+export async function ensureOwnProfile(): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.rpc("ensure_my_profile");
+  if (error) {
+    console.error("ensure_my_profile error:", error);
+    return false;
+  }
+  return true;
+}
+
 export function validateEmail(email: string): string | null {
   const trimmed = email.trim();
   if (!trimmed) return "Enter your email.";
