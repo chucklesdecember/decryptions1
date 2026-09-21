@@ -41,7 +41,7 @@ export default function App() {
   if (archive) return <ArchiveList puzzles={puzzles.slice(1)} onBack={home} onPlay={play} />;
   return <>
     <LandingPage puzzleDate={puzzles[0] ? formatPuzzleDate(puzzles[0].date) : ''}
-      playLabel={auth.status === 'signed_in' && !auth.isGuest ? 'Play' : 'Play as guest'}
+      playLabel="Play"
       unavailable={!puzzles.length || !!error || auth.status === 'loading' || auth.syncing} onStats={() => setStats(true)}
       onStartGame={() => { if (puzzles[0]) play(puzzles[0]); }} onOpenArchive={() => setArchive(true)} />
     {(!loaded || error || !puzzles.length) && <div className="mx-auto max-w-md px-4 pb-6 text-center" role="status">

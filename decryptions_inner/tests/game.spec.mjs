@@ -40,8 +40,6 @@ async function player(browser, userId = ids.alice, loggedIn = true, returningDev
         body = (await client.query('select * from public.profiles')).rows;
       } else if (name === 'logout') { body = {}; }
       else if (name === 'signup') { body = guestSession; }
-      else if (name === 'otp') { body = {}; }
-      else if (name === 'verify') { body = session; }
       else if (name === 'user' && request.method() === 'PUT') {
         const input = request.postDataJSON() ?? {};
         body = { user: { ...guestUser, new_email: input.email } };
@@ -54,7 +52,7 @@ async function player(browser, userId = ids.alice, loggedIn = true, returningDev
   });
   const page = await context.newPage();
   await page.goto('/');
-  await expect(page.getByRole('button', { name: loggedIn ? 'Play' : 'Play as guest', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   return { context, page, behavior, responses };
 }
 
@@ -141,7 +139,7 @@ test('archive does not start until Play, uses server validation, and legacy resu
   } finally { await legacy.context.close(); }
 });
 
-test('email-code account saving can play immediately', async ({ browser, request }) => {
+test('guest-first play and password accounts work without legacy account lookup', async ({ browser, request }) => {
   for (const path of ['/private/browser-test-canary.json', '/supabase/2026-09-06-authoritative-game.sql', '/scripts/import-puzzles.mjs']) {
     const response = await request.get(path);
     expect(response.status()).toBe(403);
@@ -157,37 +155,35 @@ test('email-code account saving can play immediately', async ({ browser, request
     await expect(p.page.getByRole('dialog')).toBeVisible();
     expect(p.responses.some(r => r.name === 'start_puzzle')).toBe(false);
     await p.page.getByRole('textbox', { name: 'Email', exact: true }).fill('test@example.com');
-    await p.page.getByRole('button', { name: 'Email me a code', exact: true }).click();
-    await p.page.getByRole('textbox', { name: '6-digit code', exact: true }).fill('123456');
-    await p.page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await p.page.getByRole('textbox', { name: 'Password', exact: true }).fill('password123');
+    await p.page.getByRole('button', { name: 'Log in', exact: true }).last().click();
     await expect(p.page.getByRole('button', { name: 'Account menu for cloud' })).toBeVisible();
   } finally { await p.context.close(); }
 
   const signup = await player(browser, ids.bob, false, false);
   try {
     await signup.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
+    await signup.page.getByRole('tab', { name: 'Create account', exact: true }).click();
     await signup.page.getByRole('textbox', { name: 'Email', exact: true }).fill('new@example.com');
-    await signup.page.getByRole('button', { name: 'Email me a code', exact: true }).click();
-    await signup.page.getByRole('textbox', { name: '6-digit code', exact: true }).fill('123456');
-    await signup.page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await signup.page.getByRole('textbox', { name: 'Password', exact: true }).fill('password123');
+    await signup.page.getByRole('button', { name: 'Create account', exact: true }).last().click();
     await expect(signup.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
     expect(signup.responses.some(r => r.name === 'start_puzzle')).toBe(true);
   } finally { await signup.context.close(); }
 
   const guest = await player(browser, ids.bob, false, false);
   try {
-    await guest.page.getByRole('button', { name: 'Play as guest', exact: true }).click();
-    await expect(guest.page.getByRole('heading', { name: 'Choose a temporary username' })).toBeVisible();
-    await guest.page.getByRole('textbox', { name: 'Temporary username' }).fill('bob');
+    await guest.page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(guest.page.getByRole('heading', { name: 'Choose a username' })).toBeVisible();
+    await guest.page.getByRole('textbox', { name: 'Username' }).fill('bob');
     await guest.page.getByRole('button', { name: 'Start playing' }).click();
     await expect(guest.page.getByRole('heading', { name: 'How to Play Decryptions' })).toBeVisible();
     await guest.page.getByRole('button', { name: 'Play', exact: true }).click();
     await expect(guest.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
     await guest.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();
     await guest.page.getByRole('textbox', { name: 'Email', exact: true }).fill('guest@example.com');
-    await guest.page.getByRole('button', { name: 'Email me a code', exact: true }).click();
-    await guest.page.getByRole('textbox', { name: '6-digit code', exact: true }).fill('123456');
-    await guest.page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await guest.page.getByRole('textbox', { name: 'Password', exact: true }).fill('password123');
+    await guest.page.getByRole('button', { name: 'Create account', exact: true }).last().click();
     await expect(guest.page.getByText('Account created. You can play now.')).toBeVisible();
   } finally { await guest.context.close(); }
 });

@@ -49,13 +49,13 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       const profile = (await db.admin.query('select email from public.profiles where id = $1', [ids.alice])).rows[0];
       assert.equal(profile.email, 'alice+confirmed@example.com');
     });
-    await t.test('new email-derived names preserve existing names and replace only guest names', async () => {
+    await t.test('account upgrades preserve the guest-chosen leaderboard name', async () => {
       const guestId = randomUUID();
       await db.admin.query('insert into auth.users(id, email, raw_user_meta_data) values($1, $2, $3)', [guestId, '', { username: 'temporary-name' }]);
       await db.admin.query('update auth.users set email = $1 where id = $2', ['new.player@duke.edu', guestId]);
       const guest = (await db.admin.query('select username, email from public.profiles where id = $1', [guestId])).rows[0];
       const existing = (await db.admin.query('select username from public.profiles where id = $1', [ids.alice])).rows[0];
-      assert.deepEqual(guest, { username: 'new.player', email: 'new.player@duke.edu' });
+      assert.deepEqual(guest, { username: 'temporary-name', email: 'new.player@duke.edu' });
       assert.equal(existing.username, 'alice');
     });
     await t.test('anonymous catalog and leaderboard expose no puzzle secrets or owners', async () => {

@@ -62,14 +62,14 @@ export function GuestDialog({ open, onOpenChange, onStarted }: {
         <DialogTitle className="text-base">Starting as guest…</DialogTitle>
       </div> : <>
         <DialogHeader>
-          <DialogTitle>Choose a temporary username</DialogTitle>
+          <DialogTitle>Choose a username</DialogTitle>
           <DialogDescription>
-            This is the name shown on today&apos;s leaderboard. Your guest session stays on this device.
+            This is the name shown on today&apos;s leaderboard. Your play stays on this device.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="guest-username">Temporary username</Label>
+            <Label htmlFor="guest-username">Username</Label>
             <Input id="guest-username" autoComplete="nickname" maxLength={USERNAME_MAX}
               value={username} onChange={event => setUsername(event.target.value)} disabled={busy} autoFocus />
           </div>

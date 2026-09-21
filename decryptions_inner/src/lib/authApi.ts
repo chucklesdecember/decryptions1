@@ -61,8 +61,9 @@ export async function checkUsername(name: string): Promise<UsernameStatus> {
   return (data as UsernameStatus) ?? "available";
 }
 
-interface EmailCodeParams {
+interface PasswordAccountParams {
   email: string;
+  password: string;
   captchaToken?: string;
 }
 
@@ -73,50 +74,38 @@ export function authRedirectUrl(): string {
   return configured || PRODUCTION_AUTH_REDIRECT;
 }
 
-export async function sendEmailCode(params: EmailCodeParams & {
+export async function createPasswordAccount(params: PasswordAccountParams & {
   username: string;
-  upgradingGuest?: boolean;
-}): Promise<{ ok: true } | { ok: false; message: string }> {
+}): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
   if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
   const email = params.email.trim();
   const current = (await supabase.auth.getUser()).data.user;
-  if (current?.is_anonymous && params.upgradingGuest) {
-    const { error } = await supabase.auth.updateUser({ email, data: { username: params.username } });
+  if (current?.is_anonymous) {
+    const { data, error } = await supabase.auth.updateUser({ email, password: params.password, data: { username: params.username } });
     if (error) return { ok: false, message: mapAuthError(error) };
+    return { ok: true, user: data.user ?? current };
   }
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: !(current?.is_anonymous && params.upgradingGuest),
-      data: { username: params.username },
-      captchaToken: params.captchaToken,
-    },
+  const { data, error } = await supabase.auth.signUp({
+    email, password: params.password,
+    options: { data: { username: params.username }, captchaToken: params.captchaToken },
   });
   if (error) return { ok: false, message: mapAuthError(error) };
-  return { ok: true };
+  if (!data.user || !data.session) return { ok: false, message: "Could not start your account. Try logging in." };
+  return { ok: true, user: data.user };
 }
 
-export async function sendLegacyUsernameCode(params: {
-  username: string;
+export async function loginWithPassword(params: {
+  email: string;
+  password: string;
   captchaToken?: string;
-}): Promise<{ ok: true; email: string } | { ok: false; message: string }> {
+}): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
   if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
-  const { data: email, error: lookupError } = await supabase.rpc("login_email_for_identifier", { p_identifier: params.username.trim() });
-  if (lookupError) return { ok: false, message: mapAuthError(lookupError) };
-  if (!email) return { ok: false, message: "We could not find an email for that username." };
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email as string,
-    options: { shouldCreateUser: false, captchaToken: params.captchaToken },
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: params.email.trim(), password: params.password,
+    options: { captchaToken: params.captchaToken },
   });
   if (error) return { ok: false, message: mapAuthError(error) };
-  return { ok: true, email: email as string };
-}
-
-export async function verifyEmailCode(params: { email: string; code: string }): Promise<{ ok: true; user: User } | { ok: false; message: string }> {
-  if (!supabase) return { ok: false, message: "Accounts are unavailable in this build." };
-  const { data, error } = await supabase.auth.verifyOtp({ email: params.email.trim(), token: params.code.trim(), type: "email" });
-  if (error) return { ok: false, message: mapAuthError(error) };
-  if (!data.user || !data.session) return { ok: false, message: "That code could not be verified. Try again." };
+  if (!data.user || !data.session) return { ok: false, message: "Incorrect email or password." };
   return { ok: true, user: data.user };
 }
 
@@ -181,4 +170,9 @@ export function usernameFromEmail(email: string): string | null {
   const username = trimmed.slice(0, at);
   if (username.length > EMAIL_USERNAME_MAX) return null;
   return username;
+}
+
+export function validatePassword(password: string): string | null {
+  if (password.length < 8) return "Password must be at least 8 characters.";
+  return null;
 }

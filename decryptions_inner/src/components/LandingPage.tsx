@@ -44,19 +44,18 @@ export function LandingPage({ onStartGame, onOpenArchive, onStats, puzzleDate, p
         </h1>
 
         <div className="relative z-10 w-full px-4">
-          <AccountMenu prominent onAccountReady={onStartGame} onStats={onStats} className="h-13 w-full rounded-full border-none bg-black px-6 text-base font-semibold text-white shadow-md hover:bg-gray-800 hover:text-white" />
-        </div>
-
-        <div className="relative z-10 mb-6 mt-3 w-full px-4">
           <Button
             type="button"
-            variant="outline"
             onClick={onStartGame}
             disabled={unavailable}
-            className="relative z-10 h-10 w-full rounded-full border-black/20 bg-white/70 px-6 text-sm font-medium text-black hover:bg-white"
+            className="relative z-10 h-13 w-full rounded-full bg-black px-6 text-base font-semibold text-white shadow-md hover:bg-gray-800 hover:text-white"
           >
             {playLabel}
           </Button>
+        </div>
+
+        <div className="relative z-10 mb-6 mt-3 w-full px-4">
+          <AccountMenu prominent onAccountReady={onStartGame} onStats={onStats} className="h-10 w-full rounded-full border-black/20 bg-white/70 px-6 text-sm font-medium text-black hover:bg-white" />
         </div>
 
         <div className="text-sm text-gray-700">
