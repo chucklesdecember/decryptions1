@@ -34,6 +34,7 @@ interface ShareDialogProps {
   onLeaderboard?: () => void;
   isGuest?: boolean;
   onRequireAccount?: () => void;
+  onStats?: () => void;
 }
 
 function formatTime(seconds: number) {
@@ -77,6 +78,7 @@ export function ShareDialog({
   onLeaderboard,
   isGuest = false,
   onRequireAccount,
+  onStats,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [placementLoading, setPlacementLoading] = useState(false);
@@ -216,6 +218,7 @@ export function ShareDialog({
 
           <div className="flex flex-col gap-3">
             {isGuest && <Button className="min-h-[52px] text-base font-bold" onClick={onRequireAccount}>Create account to save your play</Button>}
+            {!isGuest && onStats && <Button variant="outline" onClick={() => { onOpenChange(false); onStats(); }}>View your stats</Button>}
             {onLeaderboard && (
               <button
                 type="button"

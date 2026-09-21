@@ -36,7 +36,7 @@ export default function App() {
   });
   const home = () => { setSelected(null); setArchive(false); setStats(false); };
   if (selected && auth.user?.id === selected.userId) return <GamePage key={`${selected.userId}:${selected.puzzle.id}`} puzzle={selected.puzzle}
-    onHome={home} onArchive={() => { setSelected(null); setArchive(true); }} />;
+    onHome={home} onArchive={() => { setSelected(null); setArchive(true); }} onStats={() => { setSelected(null); setStats(true); }} />;
   if (stats) return <StatsPage onBack={home} />;
   if (archive) return <ArchiveList puzzles={puzzles.slice(1)} onBack={home} onPlay={play} />;
   return <>

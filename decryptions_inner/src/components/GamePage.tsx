@@ -11,7 +11,7 @@ import { AccountMenu } from './AccountMenu';
 import { Button } from './ui/button';
 import { Pause, Play } from 'lucide-react';
 
-export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary; onHome: () => void; onArchive: () => void }) {
+export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: PuzzleSummary; onHome: () => void; onArchive: () => void; onStats: () => void }) {
   const { refreshProgress, isGuest, requireAccount } = useAuth();
   const [share, setShare] = useState(false);
   const [results, setResults] = useState(false);
@@ -43,7 +43,7 @@ export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary;
         {state && !state.completed && <Button variant="outline" size="icon" disabled={changingTimer} onClick={() => void togglePause()} aria-label={state.paused ? 'Resume puzzle' : 'Pause puzzle'} title={state.paused ? 'Resume puzzle' : 'Pause puzzle'}>{state.paused ? <Play className="size-4" /> : <Pause className="size-4" />}</Button>}
         <InstructionsDialog />
         <Button variant="outline" size="sm" disabled={changingTimer} onClick={() => void navigate('archive')}>Archive</Button>
-        <AccountMenu />
+        <AccountMenu onStats={onStats} />
       </div>
     </header>
     <main className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-6">
@@ -67,7 +67,7 @@ export function GamePage({ puzzle, onHome, onArchive }: { puzzle: PuzzleSummary;
           {results && <div className="w-full"><Leaderboard puzzleId={puzzle.id} myRowId={result.rowId} /></div>}
           <ShareDialog isOpen={share} onOpenChange={setShare} solveTime={result.timeSeconds} hintsUsed={state.hintsUsed}
             puzzleDate={formatPuzzleDate(puzzle.date)} puzzleId={puzzle.id} playerRowId={result.rowId}
-            articleUrl={result.articleUrl ?? undefined} verified={result.verified} onLeaderboard={() => setResults(true)} isGuest={isGuest} onRequireAccount={() => requireAccount()} />
+            articleUrl={result.articleUrl ?? undefined} verified={result.verified} onLeaderboard={() => setResults(true)} isGuest={isGuest} onRequireAccount={() => requireAccount()} onStats={onStats} />
         </>}
       </>}
     </main>
