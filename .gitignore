@@ -1,2 +1,23 @@
+# OS / editor
+.DS_Store
+
+# Node / build output
+node_modules/
+dist/
+build/
+
+# Local environment (keep the example)
+.env
+.env.*
+!.env.example
+
+# Private puzzle data and test output (never commit)
+private/
+test-results/
+playwright-report/
+
+# Deploy and tooling
+.vercel/
+.claude/worktrees/
 __pycache__/
 *.pyc

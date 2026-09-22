@@ -1,6 +1,6 @@
 # Image sourcing policy
 
-Why this exists: the app self-hosts every clue image in `decryptions_inner/public/` and shows no
+Why this exists: the app self-hosts every clue image in `public/` and shows no
 credits in the UI. Only sources whose terms allow **download + self-host + no visible credit**
 qualify. Terms were checked on 2026-09-05; re-check if a provider changes its API page.
 
@@ -10,7 +10,7 @@ qualify. Terms were checked on 2026-09-05; re-check if a provider changes its AP
 |---|---|---|---|---|---|---|---|
 | 1 | Pixabay API | Pixabay Content License: free commercial use, modification allowed | not required | must download and self-host (hotlinking forbidden) | `PIXABAY_API_KEY` (free) | 100 req/min, responses must be cached 24 h, no systematic mass downloads | flat vectors and illustrations of common nouns: the house clip-art style |
 | 2 | Openverse API | filter `license=cc0,pdm` so every hit is public domain | not required for CC0/PD (record it anyway) | download and self-host | none (optional `OPENVERSE_TOKEN`) | anonymous 20/min, 200/day | flags, maps, outlines, Wikimedia/Smithsonian/Met objects, historical items |
-| 3 | Noto Emoji PNG | Apache-2.0 | license notice in `Attributions.md` | download | none | GitHub raw | deterministic fallback for everyday objects (duck, key, pill); square and transparent by construction |
+| 3 | Noto Emoji PNG | Apache-2.0 | license notice in `docs/attributions.md` | download | none | GitHub raw | deterministic fallback for everyday objects (duck, key, pill); square and transparent by construction |
 
 Rejected: **Unsplash API** (must hotlink `photo.urls`, credit photographer + Unsplash, ping the
 download endpoint), **Pexels API** (must show a prominent link to Pexels), any watermarked preview
@@ -128,5 +128,5 @@ that no puzzle references is removed together with its provenance row by
  "fetchedAt": "2026-09-05T21:40:00Z", "sha256": "...", "puzzleId": "2026-09-05-..."}
 ```
 
-Stored in `decryptions_inner/src/data/image-credits.json` (array). Not imported by the app, so it
+Stored in `src/data/image-credits.json` (array). Not imported by the app, so it
 adds nothing to the bundle; `resolveJsonModule` is on if a credits page is ever wanted.

@@ -47,24 +47,24 @@ FILE_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 # ---------------------------------------------------------------- paths
 def find_repo_root(start: Path | None = None) -> Path:
-    """Walk up from the script (or `start`) until decryptions_inner/src/data/puzzles.ts is found."""
+    """Walk up from the script (or `start`) until the repo root (package.json next to this skill) is found."""
     cur = (start or SCRIPT_DIR).resolve()
     for candidate in [cur, *cur.parents]:
-        if (candidate / "decryptions_inner" / "src" / "data" / "puzzles.ts").exists():
+        if (candidate / "package.json").exists() and (candidate / ".claude" / "skills" / "rebus-autogen").is_dir():
             return candidate
-    raise FileNotFoundError("Could not find decryptions_inner/src/data/puzzles.ts above " + str(cur))
+    raise FileNotFoundError("Could not find the repo root (package.json + .claude/skills/rebus-autogen) above " + str(cur))
 
 
 def app_paths(root: Path | None = None) -> dict[str, Path]:
     root = root or find_repo_root()
-    app = root / "decryptions_inner"
+    app = root
     return {
         "root": root,
         "app": app,
         "public": app / "public",
         "puzzles_ts": app / "src" / "data" / "puzzles.ts",
         "credits": app / "src" / "data" / "image-credits.json",
-        "attributions": app / "src" / "Attributions.md",
+        "attributions": root / "docs" / "attributions.md",
     }
 
 
@@ -263,7 +263,7 @@ def preflight() -> dict:
         c["credits_manifest"] = paths["credits"].exists()
         c["tsc"] = (paths["app"] / "node_modules" / ".bin" / "tsc").exists()
         if not c["tsc"]:
-            out["warnings"].append("node_modules not installed: typecheck and the Vite preview are unavailable (run `npm install` in decryptions_inner)")
+            out["warnings"].append("node_modules not installed: typecheck and the Vite preview are unavailable (run `npm install` at the repo root)")
     except FileNotFoundError as e:
         out["ok"] = False
         c["repo_root"] = None

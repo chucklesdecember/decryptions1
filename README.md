@@ -2,9 +2,20 @@
 
 React/Vite rebus game with Supabase Auth and a server-authoritative Supabase Postgres backend. Vercel serves the frontend; no separate API server or database is deployed.
 
+## Repository layout
+
+- `src/` — React app (components, `lib/` for Supabase/auth/game API clients, `data/image-credits.json` for clue-image provenance)
+- `public/` — self-hosted clue images, referenced from puzzle rows as `/name.png`
+- `supabase/` — SQL migrations and the [setup guide](supabase/README.md)
+- `scripts/` — puzzle import/export and the bundle privacy check
+- `tests/` — Node backend tests (embedded Postgres) and Playwright browser tests
+- `docs/` — design references and attributions
+- `.claude/skills/rebus-autogen/` — daily puzzle generator skill
+- `private/` (git-ignored) — local puzzle JSON for `npm run import:puzzles`
+
 ## Local setup
 
-Use Node 22+ and run these commands from `decryptions_inner`:
+Use Node 22+ and run these commands from the repository root:
 
 ```sh
 npm ci

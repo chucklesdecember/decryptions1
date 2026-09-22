@@ -1,6 +1,6 @@
 ---
 name: rebus-autogen
-description: End-to-end generator for the Decryptions daily news rebus puzzle. Pulls Google News top stories, identifies the top story from its cluster of outlet headlines, compresses it to a 3-6 word headline, decomposes every word into picture arithmetic by a numbered rulebook, sources legally safe square clip-art (Pixabay, Openverse public domain, Noto Emoji) with provenance, validates the letter math, and prepends the puzzle to decryptions_inner/src/data/puzzles.ts. Use this whenever the user wants today's puzzle, a new rebus, the daily puzzle, a rebus for a given headline or date, to swap or fix a clue image, to review or iterate on a drafted puzzle, or to change the rebus rules, even when they do not say "rebus" or "skill" explicitly.
+description: End-to-end generator for the Decryptions daily news rebus puzzle. Pulls Google News top stories, identifies the top story from its cluster of outlet headlines, compresses it to a 3-6 word headline, decomposes every word into picture arithmetic by a numbered rulebook, sources legally safe square clip-art (Pixabay, Openverse public domain, Noto Emoji) with provenance, validates the letter math, and prepends the puzzle to src/data/puzzles.ts. Use this whenever the user wants today's puzzle, a new rebus, the daily puzzle, a rebus for a given headline or date, to swap or fix a clue image, to review or iterate on a drafted puzzle, or to change the rebus rules, even when they do not say "rebus" or "skill" explicitly.
 ---
 
 # rebus-autogen
@@ -14,7 +14,7 @@ the pipeline verifies both mechanically before anything touches the app.
 
 - `references/rulebook.md` (always): numbered rules H/W/C/D/B/T/F/L/Q/I. Cite rule ids in your
   reasoning ("H10 tie-break", "D3 forbids middle removal") so the user can push back on a rule.
-- The three newest entries in `decryptions_inner/src/data/puzzles.ts`: the live style anchor.
+- The three newest entries in `src/data/puzzles.ts`: the live style anchor.
 - `references/archive.md`: the author's puzzle database (29 puzzles) in the author's own
   `chunk [image]` notation; the device vocabulary to draw from, and the notation to present in.
 - `references/image-sourcing.md` before step 3; `references/draft-schema.md` whenever the
@@ -141,18 +141,18 @@ Fix every error. For every warning write one line of justification or change the
    disambiguating synonym to the hint (T3), and rerun step 4.
 2. Solve each box from the tiles and chips alone, then with hints; both must reach the answer.
 3. Hint audit: no answer, no letter count, no other box's answer, under 90 characters.
-4. Optional real-app check when `decryptions_inner/node_modules` exists (else rely on the 512 px
+4. Optional real-app check when `node_modules` exists (else rely on the 512 px
    files and the gray tile mat in the contact sheet):
 
    ```bash
    python3 $SKILL/scripts/insert_puzzle.py --draft $WORK/draft.json --work $WORK --dry-run   # writes $WORK/puzzles.dry-run.ts
-   cp decryptions_inner/src/data/puzzles.ts $WORK/puzzles.orig.ts
-   cp $WORK/puzzles.dry-run.ts decryptions_inner/src/data/puzzles.ts
+   cp src/data/puzzles.ts $WORK/puzzles.orig.ts
+   cp $WORK/puzzles.dry-run.ts src/data/puzzles.ts
    ```
 
    Start the `decryptions-dev` server from `.claude/launch.json` in the Browser pane, click Play,
    screenshot the puzzle grid (desktop and mobile widths), then restore the file:
-   `cp $WORK/puzzles.orig.ts decryptions_inner/src/data/puzzles.ts`. The real insert happens only
+   `cp $WORK/puzzles.orig.ts src/data/puzzles.ts`. The real insert happens only
    in step 7.
 
 ### 6. Present
@@ -214,7 +214,7 @@ it in the same turn.
 
 ## Hard limits
 
-- Write inside the repo only to `decryptions_inner/public/` (new files), `puzzles.ts` (via
+- Write inside the repo only to `public/` (new files), `puzzles.ts` (via
   `insert_puzzle.py`), `src/data/image-credits.json`, and `$SKILL/history/` and `references/`.
   `$SKILL/scripts/` may be edited only to fix a tooling bug, and only if `selftest.py` passes
   afterwards and the fix gets a changelog row (rulebook I7).
