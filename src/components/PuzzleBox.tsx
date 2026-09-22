@@ -2,7 +2,7 @@ import React, { forwardRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Lightbulb } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { Input } from './ui/input';
 
 /** Text clues (ink, cl, …) — height matches image tokens for alignment. */
