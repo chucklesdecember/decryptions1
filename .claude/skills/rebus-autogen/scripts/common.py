@@ -64,7 +64,7 @@ def app_paths(root: Path | None = None) -> dict[str, Path]:
         "public": app / "public",
         "puzzles_ts": app / "src" / "data" / "puzzles.ts",
         "credits": app / "src" / "data" / "image-credits.json",
-        "attributions": app / "src" / "Attributions.md",
+        "attributions": root / "docs" / "attributions.md",
     }
 
 

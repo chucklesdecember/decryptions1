@@ -358,7 +358,7 @@ are checked in the QA table (Q13).
   merchandise, and listed in the QA table like a logo.
 - **L3 Logos** are nominative use (the picture names the brand). Cap them with B4, prefer a
   generic picture when one exists, and list every logo in the QA table so the user can veto.
-- **L4 Keep the trail**: provenance rows (F6) plus the two license lines in `src/Attributions.md`.
+- **L4 Keep the trail**: provenance rows (F6) plus the two license lines in `docs/attributions.md`.
 
 ## Q. QA checklist (every item must pass before presenting)
 
