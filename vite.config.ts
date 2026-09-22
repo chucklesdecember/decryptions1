@@ -4,7 +4,7 @@
   import tailwindcss from '@tailwindcss/vite';
   import path from 'path';
 
-  const serverOnly = (file: string) => ['private', 'supabase', 'scripts'].some(dir => {
+  const serverOnly = (file: string) => ['private', 'supabase', 'scripts', '.claude'].some(dir => {
     const root = path.resolve(__dirname, dir);
     return file === root || file.startsWith(root + path.sep);
   });
@@ -46,6 +46,6 @@
     server: {
       port: 3000,
       open: false,
-      fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/private/**', '**/supabase/**', '**/scripts/**'] },
+      fs: { deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/private/**', '**/supabase/**', '**/scripts/**', '**/.claude/**'] },
     },
   });

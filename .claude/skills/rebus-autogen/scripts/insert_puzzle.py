@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a draft, then prepend it to decryptions_inner/src/data/puzzles.ts in house style.
+"""Validate a draft, then prepend it to src/data/puzzles.ts in house style.
 
 Steps: validate (refuse on errors) -> serialise -> splice after `export const puzzles: Puzzle[] = [`
 -> Node import smoke test (puzzles[0].id, length+1, getCurrentPuzzle(date)) -> optional tsc
@@ -114,7 +114,7 @@ console.log(JSON.stringify({{ ok: problems.length === 0, problems, count: puzzle
 def typecheck(app_dir: Path) -> dict:
     tsc = app_dir / "node_modules" / ".bin" / "tsc"
     if not tsc.exists():
-        return {"status": "skipped", "reason": "node_modules not installed (run `npm install` in decryptions_inner)"}
+        return {"status": "skipped", "reason": "node_modules not installed (run `npm install` at the repo root)"}
     r = subprocess.run(["npm", "run", "typecheck", "--silent"], cwd=app_dir, capture_output=True, text=True, timeout=300)
     return {"status": "passed" if r.returncode == 0 else "failed", "reason": (r.stdout + r.stderr).strip()[-1500:]}
 

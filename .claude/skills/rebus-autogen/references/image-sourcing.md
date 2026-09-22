@@ -1,6 +1,6 @@
 # Image sourcing policy
 
-Why this exists: the app self-hosts every clue image in `decryptions_inner/public/` and shows no
+Why this exists: the app self-hosts every clue image in `public/` and shows no
 credits in the UI. Only sources whose terms allow **download + self-host + no visible credit**
 qualify. Terms were checked on 2026-09-05; re-check if a provider changes its API page.
 
@@ -128,5 +128,5 @@ that no puzzle references is removed together with its provenance row by
  "fetchedAt": "2026-09-05T21:40:00Z", "sha256": "...", "puzzleId": "2026-09-05-..."}
 ```
 
-Stored in `decryptions_inner/src/data/image-credits.json` (array). Not imported by the app, so it
+Stored in `src/data/image-credits.json` (array). Not imported by the app, so it
 adds nothing to the bundle; `resolveJsonModule` is on if a credits page is ever wanted.

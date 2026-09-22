@@ -4,7 +4,7 @@ React/Vite rebus game with Supabase Auth and a server-authoritative Supabase Pos
 
 ## Local setup
 
-Use Node 22+ and run these commands from `decryptions_inner`:
+Use Node 22+ and run these commands from the repository root:
 
 ```sh
 npm ci

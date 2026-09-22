@@ -4,7 +4,7 @@
     {
       "name": "decryptions-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "decryptions_inner", "run", "dev"],
+      "runtimeArgs": ["run", "dev"],
       "port": 3000
     }
   ]

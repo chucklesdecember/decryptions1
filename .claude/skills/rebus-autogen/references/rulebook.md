@@ -8,7 +8,7 @@ Rule ids are permanent. When a rule changes, its text changes and `changelog.md`
 ids are never reused or renumbered, so "loosen W4" always means the same thing. Each rule
 ends with a short *why* so you can generalise it to cases the rule did not foresee.
 
-The three newest puzzles in `decryptions_inner/src/data/puzzles.ts` are the live style anchor,
+The three newest puzzles in `src/data/puzzles.ts` are the live style anchor,
 and `archive.md` (the author's puzzle database, 29 puzzles back to 2024) is the device
 vocabulary and the notation the author thinks in. When this file and those puzzles disagree on
 taste (not on hard constraints), follow the puzzles and open a changelog row.
@@ -320,7 +320,7 @@ are checked in the QA table (Q13).
 
 ## F. Files and alt text
 
-- **F1 Names.** `decryptions_inner/public/<word>.png`, referenced as `/word.png`; the name is the
+- **F1 Names.** `public/<word>.png`, referenced as `/word.png`; the name is the
   picture word in lowercase kebab ASCII. Suffixes by device: `-outline`, `-flag`, `-sign`,
   `<letter>-cursive`, `roman-<numeral>`, `<element>-<symbol>`; logos are bare unless the brand is
   also a common noun (`apple-logo.png`). Drop the legacy `puzzle-` prefix.
