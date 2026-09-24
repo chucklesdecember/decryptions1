@@ -6,8 +6,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { cn } from "./ui/utils";
-import { Share2, Check, Copy, ExternalLink, Trophy } from "lucide-react";
+import { Share2, Check, ExternalLink, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -55,7 +54,7 @@ function formatShortDate(puzzleDate: string): string {
   return puzzleDate;
 }
 
-/** Text-only summary for copy / system share (no leaderboard block). */
+/** Text-only summary copied for sharing (no leaderboard block). */
 function buildCopyableShareText(dateStr: string, solveTime: number, hintsUsed: number): string {
   return `🔐 Decryptions — ${dateStr}
 
@@ -128,44 +127,21 @@ export function ShareDialog({
         .writeText(text)
         .then(() => {
           setCopied(true);
-          toast.success("Copied! Paste to share with friends.");
+          toast.success("Result copied — paste it anywhere.");
           setTimeout(() => setCopied(false), 2000);
         })
         .catch(() => {
-          toast.error("Couldn't copy. Try again or use Share.");
+          toast.error("Couldn't copy the result. Please try again.");
         });
       return;
     }
 
-    toast.error("Copy isn't available in this browser. Try Share.");
-  };
-
-  const handleCopy = () => {
-    posthog.capture("copy_clicked");
-    performCopy();
+    toast.error("Copy isn't available in this browser.");
   };
 
   const handleShare = () => {
     posthog.capture("share_clicked");
-    const text = copyableText;
-    if (navigator.share && navigator.canShare && navigator.canShare({ text })) {
-      navigator
-        .share({
-          title: "Decryptions Puzzle",
-          text,
-        })
-        .then(() => {
-          toast.success("Thanks for sharing!");
-        })
-        .catch((err) => {
-          if (err instanceof Error && err.name !== "AbortError") {
-            console.log("Error sharing:", err);
-            performCopy();
-          }
-        });
-    } else {
-      performCopy();
-    }
+    performCopy();
   };
 
   return (
@@ -174,7 +150,7 @@ export function ShareDialog({
         <DialogHeader>
           <DialogTitle>Puzzle solved</DialogTitle>
           <DialogDescription>
-            Share your results with friends and challenge them to beat your time!
+            Copy your result, then paste it wherever you want to share it.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
@@ -217,43 +193,24 @@ export function ShareDialog({
           )}
 
           <div className="flex flex-col gap-3">
-            {isGuest && <Button className="min-h-[52px] text-base font-bold" onClick={onRequireAccount}>Create account to save your play</Button>}
-            {!isGuest && onStats && <Button variant="outline" onClick={() => { onOpenChange(false); onStats(); }}>View your stats</Button>}
-            {onLeaderboard && (
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex w-full min-h-[52px] items-center justify-center gap-2 rounded-md px-4 py-2",
-                  "text-center text-base font-bold leading-tight text-white shadow-lg transition-[filter,box-shadow]",
-                  "ring-2 ring-amber-400/90 ring-offset-2 ring-offset-background",
-                  "hover:brightness-110 hover:shadow-xl",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2",
-                  "[&_svg]:pointer-events-auto [&_svg]:shrink-0",
-                )}
-                style={{
-                  background:
-                    "linear-gradient(to right, rgb(245 158 11), rgb(249 115 22), rgb(225 29 72))",
-                  color: "#ffffff",
-                }}
-                onClick={() => {
-                  onOpenChange(false);
-                  onLeaderboard();
-                }}
-              >
-                <Trophy className="h-6 w-6 shrink-0" aria-hidden />
-                View leaderboard and results
-              </button>
-            )}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                onClick={handleShare}
-                className="flex-1 gap-2 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-              >
-                <Share2 className="w-4 h-4" />
-                Share Result
-              </Button>
-              {articleUrl ? (
-                <Button variant="outline" className="gap-2 sm:min-w-[100px]" asChild>
+            <Button
+              onClick={handleShare}
+              className="min-h-[52px] w-full gap-2 bg-gradient-to-r from-orange-500 to-pink-500 text-base font-bold shadow-md hover:from-orange-600 hover:to-pink-600 hover:shadow-lg"
+            >
+              {copied ? <Check className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
+              {copied ? "Copied!" : "Share"}
+            </Button>
+            {isGuest && <Button variant="outline" onClick={onRequireAccount}>Create account to save your play</Button>}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {!isGuest && onStats && <Button variant="outline" onClick={() => { onOpenChange(false); onStats(); }}>View your stats</Button>}
+              {onLeaderboard && (
+                <Button variant="outline" className="gap-2" onClick={() => { onOpenChange(false); onLeaderboard(); }}>
+                  <Trophy className="h-4 w-4" />
+                  Leaderboard
+                </Button>
+              )}
+              {articleUrl && (
+                <Button variant="outline" className="gap-2" asChild>
                   <a
                     href={articleUrl}
                     target="_blank"
@@ -263,20 +220,6 @@ export function ShareDialog({
                     <ExternalLink className="w-4 h-4" />
                     Article
                   </a>
-                </Button>
-              ) : (
-                <Button onClick={handleCopy} variant="outline" className="gap-2 sm:min-w-[100px]">
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 text-green-600" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      Copy
-                    </>
-                  )}
                 </Button>
               )}
             </div>

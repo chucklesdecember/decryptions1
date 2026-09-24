@@ -60,7 +60,7 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
           <p className="text-center">Solved in {formatTime(result.timeSeconds)} with {state.hintsUsed} hint{state.hintsUsed === 1 ? '' : 's'}.</p>
           {!result.verified && <p className="text-sm text-amber-800">Unverified · recorded before server validation.</p>}
           <div className="flex flex-wrap justify-center gap-2">
-            <Button onClick={() => setShare(true)}>Share result</Button>
+            <Button onClick={() => setShare(true)}>Share</Button>
             <Button variant="outline" onClick={() => setResults(r => !r)}>Leaderboard</Button>
             {result.articleUrl && <Button asChild variant="outline"><a href={result.articleUrl} target="_blank" rel="noopener noreferrer">Read article</a></Button>}
           </div>
