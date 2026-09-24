@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useGame } from '../lib/useGame';
 import { useAuth } from '../lib/auth';
 import { formatPuzzleDate, formatTime, type PuzzleSummary } from '../lib/gameApi';
@@ -20,6 +20,7 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
   const { refreshProgress, isGuest, requireAccount } = useAuth();
   const [share, setShare] = useState(false);
   const [copied, setCopied] = useState(false);
+  const leaderboardRef = useRef<HTMLDivElement>(null);
   const [changingTimer, setChangingTimer] = useState(false);
   const game = useGame(puzzle.id, () => { setShare(true); void refreshProgress(); });
   const state = game.state;
@@ -52,6 +53,10 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
       toast.error("Couldn't copy the result. Please try again.");
     }
   };
+  const showLeaderboard = () => {
+    setShare(false);
+    window.requestAnimationFrame(() => leaderboardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
   return <div className="min-h-app bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
     <header className="border-b bg-white/80 px-4 py-3 shadow-sm">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
@@ -81,10 +86,11 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
             <Button onClick={() => void shareResult()}>{copied && <Check className="mr-2 size-4" />}{copied ? 'Copied!' : 'Share'}</Button>
             {result.articleUrl && <Button asChild variant="outline"><a href={result.articleUrl} target="_blank" rel="noopener noreferrer">Read article</a></Button>}
           </div>
-          <div className="w-full"><Leaderboard puzzleId={puzzle.id} myRowId={result.rowId} /></div>
+          <div ref={leaderboardRef} className="w-full scroll-mt-4"><Leaderboard puzzleId={puzzle.id} myRowId={result.rowId} /></div>
           <ShareDialog isOpen={share} onOpenChange={setShare} solveTime={result.timeSeconds} hintsUsed={state.hintsUsed}
             puzzleDate={formatPuzzleDate(puzzle.date)} puzzleId={puzzle.id} playerRowId={result.rowId}
-            articleUrl={result.articleUrl ?? undefined} verified={result.verified} isGuest={isGuest} onRequireAccount={() => requireAccount()} onStats={onStats} />
+            articleUrl={result.articleUrl ?? undefined} verified={result.verified} onLeaderboard={showLeaderboard}
+            isGuest={isGuest} onRequireAccount={() => requireAccount()} onStats={onStats} />
         </>}
       </>}
     </main>

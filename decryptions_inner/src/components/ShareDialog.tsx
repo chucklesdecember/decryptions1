@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Share2, Check, ExternalLink } from "lucide-react";
+import { Share2, Check, ExternalLink, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -32,6 +32,7 @@ interface ShareDialogProps {
   articleUrl?: string;
   /** Server-confirmed leaderboard row; used to slice the leaderboard */
   playerRowId: string | null;
+  onLeaderboard?: () => void;
   isGuest?: boolean;
   onRequireAccount?: () => void;
   onStats?: () => void;
@@ -65,6 +66,7 @@ export function ShareDialog({
   puzzleId,
   articleUrl,
   playerRowId,
+  onLeaderboard,
   isGuest = false,
   onRequireAccount,
   onStats,
@@ -194,6 +196,12 @@ export function ShareDialog({
             {isGuest && <Button variant="outline" onClick={onRequireAccount}>Create account to save your play</Button>}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {!isGuest && onStats && <Button variant="outline" onClick={() => { onOpenChange(false); onStats(); }}>View your stats</Button>}
+              {onLeaderboard && (
+                <Button variant="outline" className="gap-2" onClick={onLeaderboard}>
+                  <Trophy className="h-4 w-4" />
+                  Leaderboard
+                </Button>
+              )}
               {articleUrl && (
                 <Button variant="outline" className="gap-2" asChild>
                   <a
