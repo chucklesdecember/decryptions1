@@ -45,6 +45,7 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
     try {
       await copyShareText(buildShareText(formatPuzzleDate(puzzle.date), result.timeSeconds, state?.hintsUsed ?? 0, result.verified));
       setCopied(true);
+      setShare(true);
       toast.success('Result copied — paste it anywhere.');
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
