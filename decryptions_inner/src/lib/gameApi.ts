@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
 export interface PuzzleSummary { id: string; date: string; category: string }
-export interface PuzzleClue { type: 'image' | 'text' | 'symbol' | 'operator'; content: string; alt?: string }
+export interface PuzzleClue { type: 'image' | 'text' | 'symbol' | 'operator'; content: string; alt?: string; layout?: 'wide' }
 export interface PublicWord { clues: PuzzleClue[]; answerLength: number; acceptedAnswer: string | null; hint: string | null }
 export interface ProgressRow {
   puzzleId: string; timeSeconds: number; hintsUsed: number;

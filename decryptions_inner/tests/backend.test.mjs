@@ -6,7 +6,7 @@ import { execFile } from 'node:child_process';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
-import { createDatabase, ids, puzzles, rpc, migration, pauseMigration } from './database.mjs';
+import { createDatabase, ids, puzzles, rpc, migration, pauseMigration, answerAliasesMigration } from './database.mjs';
 import { importPuzzles, validatePuzzles } from '../scripts/import-puzzles.mjs';
 
 const denied = promise => assert.rejects(promise, error => error.code === '42501');
@@ -122,6 +122,17 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       const independent = await rpc(bob, 'start_puzzle', [ids.daily]);
       assert.equal(independent.words[0].acceptedAnswer, null); assert.equal(independent.hintsUsed, 0);
     });
+    await t.test('private answer aliases are accepted without being exposed to unsolved clients', async () => {
+      const id = randomUUID();
+      await db.admin.query('insert into auth.users(id, email, raw_user_meta_data) values($1, $2, $3)', [id, 'alias@example.com', { username: 'alias' }]);
+      const client = await db.clientFor(id);
+      const started = await rpc(client, 'start_puzzle', [ids.daily]);
+      assert.equal(started.words[0].acceptedAnswer, null);
+      assert(!JSON.stringify(started).includes('CONCEALED'));
+      const result = await rpc(client, 'submit_word', [ids.daily, 0, 'concealed']);
+      assert.equal(result.correct, true);
+      assert.equal(result.state.words[0].acceptedAnswer, 'HIDDEN');
+    });
     await t.test('pausing freezes server time and resuming excludes the paused interval', async () => {
       await db.admin.query("update private.attempts set started_at = clock_timestamp() - interval '120 seconds' where user_id = $1 and puzzle_id = $2", [ids.bob, ids.daily]);
       const paused = await rpc(bob, 'pause_puzzle', [ids.daily]);
@@ -176,7 +187,7 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       await rpc(bob, 'submit_word', [ids.archive, 0, 'PRIVATE']);
       const solved = await rpc(bob, 'submit_word', [ids.archive, 1, 'STORY']);
       assert(solved.state.completed && solved.state.result.verified);
-      await db.admin.query(migration); await db.admin.query(pauseMigration); await importPuzzles(db.admin, puzzles);
+      await db.admin.query(migration); await db.admin.query(pauseMigration); await db.admin.query(answerAliasesMigration); await importPuzzles(db.admin, puzzles);
       const accounts = await readFile(new URL('../supabase/2026-09-05-accounts.sql', import.meta.url), 'utf8');
       await assert.rejects(db.admin.query(accounts), /do not reapply/);
       await db.admin.query('rollback');
@@ -186,6 +197,8 @@ test('Supabase game SQL on PostgreSQL with separate authenticated connections', 
       await assert.rejects(importPuzzles(db.admin, changed), /Cannot change a puzzle after play/);
       assert.equal((await rpc(alice, 'start_puzzle', [ids.daily])).words[0].acceptedAnswer, 'HIDDEN');
       assert.throws(() => validatePuzzles([{ ...puzzles[0], date: '2000-02-30' }]), /dates/);
+      const duplicateAlias = structuredClone(puzzles); duplicateAlias[0].words[0].acceptedAnswers = ['same', 'SAME'];
+      assert.throws(() => validatePuzzles(duplicateAlias), /Accepted answers/);
     });
   } finally { await db.stop(); }
 });

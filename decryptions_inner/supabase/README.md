@@ -13,9 +13,10 @@ This change builds on account PR #5. Test in a separate Supabase staging project
 5. Apply `2026-09-21-guest-archive.sql`, then `2026-09-21-pausable-timer.sql`.
 6. Apply `2026-09-21-remove-september-15.sql` on projects that previously imported the retired September 15 puzzle.
 7. Apply `2026-09-21-password-auth.sql`, then `2026-09-21-email-derived-usernames.sql` for username-or-email password login and email-derived names.
-8. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
-9. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
-10. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
+8. Apply `2026-09-23-answer-aliases.sql` to allow optional server-private alternate spellings such as `19` / `NINETEEN`.
+9. Import the private puzzle data as described below, using the same project's Postgres admin connection. Confirm `list_puzzles()` returns the expected dates and UUIDs. The most recent published date is the daily puzzle; older dates form the archive. Publication uses `America/New_York`, and future puzzles are inaccessible.
+10. Deploy this frontend to Vercel with that project's `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Keep `.env`, database passwords, and service-role keys out of Git and out of all `VITE_` variables. Leave the `private` schema out of the Data API's exposed schemas.
+11. Complete the staging checks below before applying the same steps to production. Monitor Supabase Postgres/API logs for permission errors, failed RPCs, and unusual submission volume. The client does not log guesses or answer responses.
 
 Rollback: retain the database restrictions and take the game offline while correcting the frontend or migration. Restoring the old frontend alone cannot submit scores. Do not restore permissive grants/policies as a workaround.
 
@@ -29,7 +30,7 @@ npm run export:legacy
 
 It writes `private/puzzles.json` with file permissions `0600` and refuses to overwrite it. The exporter exists only to migrate already-published content. Git history and old deployed assets still contain those historical answers; removing the current source does not erase them. Retire old previews/assets where practical. Do not commit future answers or SQL literals containing them to this public repository.
 
-Author future puzzles directly in private JSON outside Git. Each entry has a unique opaque UUID `id`, ISO `date`, `category`, `headline`, optional HTTP(S) `articleUrl`, `words` containing `answer` and `clues`, and one hint string per word. Clues contain `type` (`image`, `text`, `symbol`, `operator`), `content`, and optional `alt`. For image clues, `content` is a local asset path or HTTP(S) URL. Public clue assets should use neutral names and contain only the intended clues. Each puzzle contains 1–30 words; each answer contains 1–128 characters. Do not add solution-bearing metadata to clues.
+Author future puzzles directly in private JSON outside Git. Each entry has a unique opaque UUID `id`, ISO `date`, `category`, `headline`, optional HTTP(S) `articleUrl`, `words` containing `answer`, optional `acceptedAnswers`, and `clues`, and one hint string per word. `acceptedAnswers` is a nonempty array of unique case-insensitive aliases distinct from the canonical answer; it remains private and a successful alias still reveals the canonical answer. Clues contain `type` (`image`, `text`, `symbol`, `operator`), `content`, and optional `alt`. For image clues, `content` is a local asset path or HTTP(S) URL. Public clue assets should use neutral names and contain only the intended clues. Each puzzle contains 1–30 words; each answer or alias contains 1–128 characters. Do not add solution-bearing metadata to clues.
 
 Store the **Supabase database connection string** in a private environment file outside the repository, or an ignored `private/import.env` with permissions `0600`:
 
@@ -55,7 +56,7 @@ The importer preserves old scores, timestamps, hints, names, and ownership, repl
 | `get_leaderboard(p_puzzle_id uuid)` | Public | Top 100: time, hints, timestamp, then row UUID; old scores labeled `verified: false`; no account IDs |
 | `start_puzzle(p_puzzle_id uuid)` | Signed in | Create/resume the one account attempt before returning clues and lengths; completed accounts receive their saved result |
 | `pause_puzzle(p_puzzle_id uuid)` | Signed in | Pause the active attempt and return its frozen elapsed time |
-| `submit_word(p_puzzle_id uuid, p_word_index integer, p_guess text)` | Signed in | Zero-based word index, case-insensitive exact match; final accepted word atomically writes score and progress |
+| `submit_word(p_puzzle_id uuid, p_word_index integer, p_guess text)` | Signed in | Zero-based word index, case-insensitive match against the canonical answer or private aliases; final accepted word atomically writes score and progress |
 | `reveal_hint(p_puzzle_id uuid, p_word_index integer)` | Signed in | Record each hint once, then return its text |
 | `get_my_progress()` | Signed in | Read only the caller's completed, published puzzles |
 

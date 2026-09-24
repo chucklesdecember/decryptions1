@@ -20,11 +20,14 @@ const OP_TOKEN =
  */
 const IMAGE_TILE =
   'flex h-12 min-w-12 max-w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-neutral-100 p-1';
+const WIDE_IMAGE_TILE =
+  'flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-neutral-100 p-1';
 
 interface PuzzleClue {
   type: 'image' | 'text' | 'symbol' | 'operator';
   content: string;
   alt?: string;
+  layout?: 'wide';
 }
 
 /**
@@ -83,7 +86,7 @@ function groupClues(clues: PuzzleClue[]): PuzzleClue[][] {
 function ClueToken({ clue }: { clue: PuzzleClue }) {
   if (clue.type === 'image') {
     return (
-      <div className={IMAGE_TILE}>
+      <div className={clue.layout === 'wide' ? WIDE_IMAGE_TILE : IMAGE_TILE}>
         <ImageWithFallback
           src={clue.content}
           alt={clue.alt || 'puzzle clue'}

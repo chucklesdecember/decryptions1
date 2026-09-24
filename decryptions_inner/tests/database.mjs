@@ -20,7 +20,7 @@ export const ids = {
 // Synthetic data only. Actual puzzle seeds must stay in ignored private storage.
 export const puzzles = [
   { id: ids.daily, legacyId: '2000-01-02-hidden-news', date: '2000-01-02', category: 'Test', headline: 'Hidden News', articleUrl: 'https://example.com/private-headline',
-    words: [{ answer: 'HIDDEN', clues: [{ type: 'text', content: 'HID + DEN' }] }, { answer: 'NEWS', clues: [{ type: 'text', content: 'NEW + S' }] }], hints: ['First private hint', 'Second private hint'] },
+    words: [{ answer: 'HIDDEN', acceptedAnswers: ['CONCEALED'], clues: [{ type: 'text', content: 'HID + DEN' }] }, { answer: 'NEWS', clues: [{ type: 'text', content: 'NEW + S' }] }], hints: ['First private hint', 'Second private hint'] },
   { id: ids.archive, legacyId: '2000-01-01-private-story', date: '2000-01-01', category: 'Test', headline: 'Private Story',
     words: [{ answer: 'PRIVATE', clues: [{ type: 'text', content: 'PRI + VATE' }] }, { answer: 'STORY', clues: [{ type: 'text', content: 'STOR + Y' }] }], hints: ['Archive hint one', 'Archive hint two'] },
   { id: ids.future, date: '2999-01-01', category: 'Future secret category', headline: 'Unpublished Secret',
@@ -28,6 +28,7 @@ export const puzzles = [
 ];
 export const migration = await readFile(new URL('../supabase/2026-09-06-authoritative-game.sql', import.meta.url), 'utf8');
 export const pauseMigration = await readFile(new URL('../supabase/2026-09-21-pausable-timer.sql', import.meta.url), 'utf8');
+export const answerAliasesMigration = await readFile(new URL('../supabase/2026-09-23-answer-aliases.sql', import.meta.url), 'utf8');
 export const passwordMigration = await readFile(new URL('../supabase/2026-09-21-password-auth.sql', import.meta.url), 'utf8');
 export const emailUsernameMigration = await readFile(new URL('../supabase/2026-09-21-email-derived-usernames.sql', import.meta.url), 'utf8');
 export const retireLegacyUsernamesMigration = await readFile(new URL('../supabase/2026-09-21-retire-legacy-usernames.sql', import.meta.url), 'utf8');
@@ -98,6 +99,7 @@ export async function createDatabase() {
     await admin.query(migration);
     await admin.query(await readFile(new URL('../supabase/2026-09-21-guest-archive.sql', import.meta.url), 'utf8'));
     await admin.query(pauseMigration);
+    await admin.query(answerAliasesMigration);
     await importPuzzles(admin, puzzles);
     await admin.query(statsMigration);
     async function clientFor(userId, role = 'authenticated', isAnonymous = false) {

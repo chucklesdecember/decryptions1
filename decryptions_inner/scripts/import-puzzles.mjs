@@ -14,9 +14,15 @@ export function validatePuzzles(rows) {
     if (!Array.isArray(p.words) || !p.words.length || p.words.length > 30 || !Array.isArray(p.hints) || p.hints.length !== p.words.length) throw new Error('Expected 1–30 words with matching hints');
     for (const [i, w] of p.words.entries()) {
       if (typeof w.answer !== 'string' || !w.answer.length || w.answer.length > 128 || !Array.isArray(w.clues) || !w.clues.length) throw new Error('Invalid puzzle word');
+      if (w.acceptedAnswers != null && (!Array.isArray(w.acceptedAnswers) || !w.acceptedAnswers.length
+        || w.acceptedAnswers.some(a => typeof a !== 'string' || !a.length || a.length > 128)
+        || new Set(w.acceptedAnswers.map(a => a.toLocaleUpperCase('en-US'))).size !== w.acceptedAnswers.length
+        || w.acceptedAnswers.some(a => a.toLocaleUpperCase('en-US') === w.answer.toLocaleUpperCase('en-US')))) {
+        throw new Error('Accepted answers must be unique nonempty aliases distinct from the canonical answer');
+      }
       if (typeof p.hints[i] !== 'string' || !p.hints[i].length) throw new Error('Every word needs a hint');
       for (const c of w.clues) {
-        if (!['image', 'text', 'symbol', 'operator'].includes(c.type) || typeof c.content !== 'string' || (c.alt != null && typeof c.alt !== 'string')) throw new Error('Invalid clue');
+        if (!['image', 'text', 'symbol', 'operator'].includes(c.type) || typeof c.content !== 'string' || (c.alt != null && typeof c.alt !== 'string') || (c.layout != null && c.layout !== 'wide')) throw new Error('Invalid clue');
         if (c.type === 'image' && !/^(\/(?!\/)|https?:\/\/)/.test(c.content)) throw new Error('Image URL must be a local path or HTTP(S)');
       }
     }
@@ -36,7 +42,11 @@ export async function importPuzzles(client, rows) {
       const legacy = p.legacyId ? (await client.query('select puzzle_id from private.puzzle_legacy_ids where legacy_id = $1', [p.legacyId])).rows[0] : null;
       const id = legacy?.puzzle_id ?? p.id;
       const old = (await client.query('select * from private.puzzles where id = $1', [id])).rows[0];
-      const words = p.words.map(w => ({ answer: w.answer, clues: w.clues.map(c => ({ type: c.type, content: c.content, ...(c.alt == null ? {} : { alt: c.alt }) })) }));
+      const words = p.words.map(w => ({
+        answer: w.answer,
+        ...(w.acceptedAnswers == null ? {} : { acceptedAnswers: w.acceptedAnswers }),
+        clues: w.clues.map(c => ({ type: c.type, content: c.content, ...(c.alt == null ? {} : { alt: c.alt }), ...(c.layout == null ? {} : { layout: c.layout }) })),
+      }));
       if (old) {
         const changed = (await client.query(`select not (publish_date = $2::date and available_on is not distinct from $3::date
           and category = $4 and headline = $5 and article_url is not distinct from $6
