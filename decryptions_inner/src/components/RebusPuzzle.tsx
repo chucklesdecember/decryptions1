@@ -43,7 +43,10 @@ export function RebusPuzzle({ words, completed, checkWord, revealHint }: Props) 
     inputsRef.current = next; setInputs(next);
     clearTimeout(timers.current[index]);
     setChecks(c => ({ ...c, [index]: { value } }));
-    if (value.length === words[index].answerLength) timers.current[index] = setTimeout(() => void validate(index, value), 300);
+    // Canonical length is public, but private accepted aliases may be longer
+    // (for example, "19" also accepting "NINETEEN"). Check any completed-or-
+    // longer entry after the user pauses typing so aliases reach the server.
+    if (value.length >= words[index].answerLength) timers.current[index] = setTimeout(() => void validate(index, value), 300);
   };
   return <div className="grid w-full max-w-3xl grid-cols-1 gap-3 md:grid-cols-2">
     {words.map((word, index) => {
