@@ -65,11 +65,15 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
               Example
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-              <span className="rounded-md bg-black px-2.5 py-1.5 text-white">TRUMPET</span>
+              <span className="flex size-14 items-center justify-center rounded-lg border border-black/10 bg-white p-1.5 shadow-sm">
+                <img src="/trumpet.png" alt="Trumpet" className="size-full object-contain" />
+              </span>
               <span className="text-xl text-black/40">−</span>
-              <span className="rounded-md bg-black px-2.5 py-1.5 text-white">T</span>
+              <span className="flex size-14 items-center justify-center rounded-lg border border-black/10 bg-white p-1.5 shadow-sm">
+                <img src="/et-outline.jpg" alt="E.T. outline" className="size-full object-contain" />
+              </span>
               <span className="text-xl text-black/40">=</span>
-              <span className="rounded-md border-2 border-black bg-[#d9f99d] px-2.5 py-1.5 text-black">RUMPET</span>
+              <span className="rounded-md border-2 border-black bg-[#d9f99d] px-2.5 py-2 text-black">TRUMP</span>
             </div>
             <p className="mt-2 text-[13px] leading-5 text-black/55">A minus sign means remove the clue on the right from the clue on the left.</p>
           </div>
