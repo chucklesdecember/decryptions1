@@ -10,11 +10,15 @@ import { Leaderboard } from './Leaderboard';
 import { AccountMenu } from './AccountMenu';
 import { Button } from './ui/button';
 import { Pause, Play } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { toast } from 'sonner';
+import posthog from 'posthog-js';
+import { buildShareText, copyShareText } from '../lib/shareResult';
 
 export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: PuzzleSummary; onHome: () => void; onArchive: () => void; onStats: () => void }) {
   const { refreshProgress, isGuest, requireAccount } = useAuth();
   const [share, setShare] = useState(false);
-  const [results, setResults] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [changingTimer, setChangingTimer] = useState(false);
   const game = useGame(puzzle.id, () => { setShare(true); void refreshProgress(); });
   const state = game.state;
@@ -34,6 +38,18 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
     if (state.paused) await game.resume();
     else await game.pause();
     setChangingTimer(false);
+  };
+  const shareResult = async () => {
+    if (!result) return;
+    posthog.capture('share_clicked', { location: 'completed_page' });
+    try {
+      await copyShareText(buildShareText(formatPuzzleDate(puzzle.date), result.timeSeconds, state?.hintsUsed ?? 0, result.verified));
+      setCopied(true);
+      toast.success('Result copied — paste it anywhere.');
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Couldn't copy the result. Please try again.");
+    }
   };
   return <div className="min-h-app bg-gradient-to-br from-orange-50 via-yellow-50 to-pink-50">
     <header className="border-b bg-white/80 px-4 py-3 shadow-sm">
@@ -60,14 +76,13 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
           <p className="text-center">Solved in {formatTime(result.timeSeconds)} with {state.hintsUsed} hint{state.hintsUsed === 1 ? '' : 's'}.</p>
           {!result.verified && <p className="text-sm text-amber-800">Unverified · recorded before server validation.</p>}
           <div className="flex flex-wrap justify-center gap-2">
-            <Button onClick={() => setShare(true)}>Share</Button>
-            <Button variant="outline" onClick={() => setResults(r => !r)}>Leaderboard</Button>
+            <Button onClick={() => void shareResult()}>{copied && <Check className="mr-2 size-4" />}{copied ? 'Copied!' : 'Share'}</Button>
             {result.articleUrl && <Button asChild variant="outline"><a href={result.articleUrl} target="_blank" rel="noopener noreferrer">Read article</a></Button>}
           </div>
-          {results && <div className="w-full"><Leaderboard puzzleId={puzzle.id} myRowId={result.rowId} /></div>}
+          <div className="w-full"><Leaderboard puzzleId={puzzle.id} myRowId={result.rowId} /></div>
           <ShareDialog isOpen={share} onOpenChange={setShare} solveTime={result.timeSeconds} hintsUsed={state.hintsUsed}
             puzzleDate={formatPuzzleDate(puzzle.date)} puzzleId={puzzle.id} playerRowId={result.rowId}
-            articleUrl={result.articleUrl ?? undefined} verified={result.verified} onLeaderboard={() => setResults(true)} isGuest={isGuest} onRequireAccount={() => requireAccount()} onStats={onStats} />
+            articleUrl={result.articleUrl ?? undefined} verified={result.verified} isGuest={isGuest} onRequireAccount={() => requireAccount()} onStats={onStats} />
         </>}
       </>}
     </main>

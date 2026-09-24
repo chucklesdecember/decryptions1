@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Share2, Check, ExternalLink, Trophy } from "lucide-react";
+import { Share2, Check, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import posthog from "posthog-js";
@@ -16,6 +16,7 @@ import {
   type SolveEntry,
 } from "../lib/leaderboardApi";
 import { LeaderboardPlacementPreview } from "./LeaderboardPlacementPreview";
+import { buildShareText, copyShareText } from "../lib/shareResult";
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -30,7 +31,6 @@ interface ShareDialogProps {
   articleUrl?: string;
   /** Server-confirmed leaderboard row; used to slice the leaderboard */
   playerRowId: string | null;
-  onLeaderboard?: () => void;
   isGuest?: boolean;
   onRequireAccount?: () => void;
   onStats?: () => void;
@@ -54,16 +54,6 @@ function formatShortDate(puzzleDate: string): string {
   return puzzleDate;
 }
 
-/** Text-only summary copied for sharing (no leaderboard block). */
-function buildCopyableShareText(dateStr: string, solveTime: number, hintsUsed: number): string {
-  return `🔐 Decryptions — ${dateStr}
-
-⏱️ My time: ${formatTime(solveTime)}
-💡 ${hintsUsed} hint${hintsUsed !== 1 ? "s" : ""} used
-
-https://decryptions1.vercel.app/`;
-}
-
 export function ShareDialog({
   isOpen,
   onOpenChange,
@@ -74,13 +64,13 @@ export function ShareDialog({
   puzzleId,
   articleUrl,
   playerRowId,
-  onLeaderboard,
   isGuest = false,
   onRequireAccount,
   onStats,
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [placementLoading, setPlacementLoading] = useState(false);
+  const [secondsToNextPuzzle, setSecondsToNextPuzzle] = useState(0);
   const [placement, setPlacement] = useState<{
     rank: number;
     slice: SolveEntry[];
@@ -88,7 +78,40 @@ export function ShareDialog({
   } | null>(null);
 
   const dateStr = formatShortDate(puzzleDate);
-  const copyableText = buildCopyableShareText(dateStr, solveTime, hintsUsed) + (verified ? "" : "\nUnverified legacy score");
+  const copyableText = buildShareText(dateStr, solveTime, hintsUsed, verified);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric", month: "numeric", day: "numeric",
+      hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23",
+    });
+    const localParts = (date: Date) => Object.fromEntries(
+      formatter.formatToParts(date).filter(part => part.type !== "literal").map(part => [part.type, Number(part.value)]),
+    ) as Record<string, number>;
+    const nextMidnight = (now: Date) => {
+      const current = localParts(now);
+      const nextDate = new Date(Date.UTC(current.year, current.month - 1, current.day + 1));
+      const desired = Date.UTC(nextDate.getUTCFullYear(), nextDate.getUTCMonth(), nextDate.getUTCDate());
+      let guess = desired;
+      for (let i = 0; i < 3; i++) {
+        const actual = localParts(new Date(guess));
+        const represented = Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute, actual.second);
+        guess += desired - represented;
+      }
+      return guess;
+    };
+    const update = () => {
+      const now = new Date();
+      setSecondsToNextPuzzle(Math.max(0, Math.ceil((nextMidnight(now) - now.getTime()) / 1000)));
+    };
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [isOpen]);
+
+  const countdown = `${Math.floor(secondsToNextPuzzle / 3600).toString().padStart(2, "0")}:${Math.floor((secondsToNextPuzzle % 3600) / 60).toString().padStart(2, "0")}:${(secondsToNextPuzzle % 60).toString().padStart(2, "0")}`;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -123,8 +146,7 @@ export function ShareDialog({
     const text = copyableText;
 
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard
-        .writeText(text)
+      copyShareText(text)
         .then(() => {
           setCopied(true);
           toast.success("Result copied — paste it anywhere.");
@@ -167,6 +189,11 @@ export function ShareDialog({
             </p>
           </div>
 
+          <p className="text-center text-sm text-muted-foreground">
+            Next puzzle in <span className="font-semibold tabular-nums text-foreground">{countdown}</span>
+            <span className="block text-xs">at midnight ET</span>
+          </p>
+
           {placementLoading && (
             <p className="text-center text-sm text-muted-foreground">Loading leaderboard…</p>
           )}
@@ -203,12 +230,6 @@ export function ShareDialog({
             {isGuest && <Button variant="outline" onClick={onRequireAccount}>Create account to save your play</Button>}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {!isGuest && onStats && <Button variant="outline" onClick={() => { onOpenChange(false); onStats(); }}>View your stats</Button>}
-              {onLeaderboard && (
-                <Button variant="outline" className="gap-2" onClick={() => { onOpenChange(false); onLeaderboard(); }}>
-                  <Trophy className="h-4 w-4" />
-                  Leaderboard
-                </Button>
-              )}
               {articleUrl && (
                 <Button variant="outline" className="gap-2" asChild>
                   <a
