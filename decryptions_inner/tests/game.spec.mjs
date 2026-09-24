@@ -179,7 +179,7 @@ test('guest-first play and password accounts work without legacy account lookup'
     await expect(guest.page.getByRole('heading', { name: 'Choose a username' })).toBeVisible();
     await guest.page.getByRole('textbox', { name: 'Username' }).fill('bob');
     await guest.page.getByRole('button', { name: 'Start playing' }).click();
-    await expect(guest.page.getByRole('heading', { name: 'How to Play Decryptions' })).toBeVisible();
+    await expect(guest.page.getByRole('heading', { name: 'How to play' })).toBeVisible();
     await guest.page.getByRole('button', { name: 'Play', exact: true }).click();
     await expect(guest.page.getByRole('textbox', { name: 'Word 1', exact: true })).toBeVisible();
     await guest.page.getByRole('button', { name: 'Log in or create account', exact: true }).click();

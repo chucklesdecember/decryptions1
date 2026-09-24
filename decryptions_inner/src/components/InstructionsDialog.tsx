@@ -8,7 +8,7 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { Button } from './ui/button';
-import { HelpCircle, Play } from 'lucide-react';
+import { ArrowRight, HelpCircle, Lightbulb, Play, Timer } from 'lucide-react';
 
 interface InstructionsDialogProps {
   onOpenChange?: (open: boolean) => void;
@@ -29,75 +29,78 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-md gap-2 p-4 pt-12 sm:gap-2 sm:p-5 sm:pt-12">
-        <DialogHeader className="gap-1.5">
-          <DialogTitle>How to Play Decryptions</DialogTitle>
-          <DialogDescription>Solve rebus puzzles to decode the daily headline.</DialogDescription>
+      <DialogContent className="max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl border-2 border-black/10 bg-[#fffdf5] p-0 shadow-2xl sm:max-w-lg">
+        <DialogHeader className="border-b border-black/10 bg-white px-5 pb-5 pt-7 text-left sm:px-7">
+          <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-black/50">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-black text-sm font-black text-white">D</span>
+            Daily puzzle
+          </div>
+          <DialogTitle className="text-2xl font-bold tracking-tight sm:text-3xl">How to play</DialogTitle>
+          <DialogDescription className="mt-2 max-w-sm text-[15px] leading-6 text-black/60">
+            Decode six rebus clues to reveal today’s news headline.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 text-sm text-muted-foreground">
-          <div>
-            <h4
-              className="mb-1 font-semibold text-foreground"
-              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
-            >
-              Goal
-            </h4>
-            <p>Decode each word to reveal the full news headline.</p>
-            <p className="mt-1.5">Each box = one word.</p>
+        <div className="space-y-5 px-5 py-5 text-[15px] leading-6 sm:px-7 sm:py-6">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-black/10 bg-white p-3">
+              <div className="mb-2 flex size-7 items-center justify-center rounded-full bg-black text-sm font-bold text-white">1</div>
+              <p className="font-semibold text-black">Read the clues</p>
+              <p className="mt-1 text-[13px] leading-5 text-black/55">Each box is one word.</p>
+            </div>
+            <div className="rounded-xl border border-black/10 bg-white p-3">
+              <div className="mb-2 flex size-7 items-center justify-center rounded-full bg-black text-sm font-bold text-white">2</div>
+              <p className="font-semibold text-black">Build the word</p>
+              <p className="mt-1 text-[13px] leading-5 text-black/55">Combine sounds, images, and letters.</p>
+            </div>
+            <div className="rounded-xl border border-black/10 bg-white p-3">
+              <div className="mb-2 flex size-7 items-center justify-center rounded-full bg-black text-sm font-bold text-white">3</div>
+              <p className="font-semibold text-black">Beat the clock</p>
+              <p className="mt-1 text-[13px] leading-5 text-black/55">Solve today’s headline once.</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-black/10 bg-white p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-bold text-black">
+              <ArrowRight className="size-4" />
+              Example
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+              <span className="rounded-md bg-black px-2.5 py-1.5 text-white">TRUMPET</span>
+              <span className="text-xl text-black/40">−</span>
+              <span className="rounded-md bg-black px-2.5 py-1.5 text-white">T</span>
+              <span className="text-xl text-black/40">=</span>
+              <span className="rounded-md border-2 border-black bg-[#d9f99d] px-2.5 py-1.5 text-black">RUMPET</span>
+            </div>
+            <p className="mt-2 text-[13px] leading-5 text-black/55">A minus sign means remove the clue on the right from the clue on the left.</p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex gap-3 rounded-xl bg-black/[0.04] p-3">
+              <Lightbulb className="mt-0.5 size-5 shrink-0 text-black/60" />
+              <div><p className="font-semibold text-black">Use the hints</p><p className="mt-0.5 text-[13px] leading-5 text-black/55">Images may be sounds or homophones. The number shows the answer length.</p></div>
+            </div>
+            <div className="flex gap-3 rounded-xl bg-black/[0.04] p-3">
+              <Timer className="mt-0.5 size-5 shrink-0 text-black/60" />
+              <div><p className="font-semibold text-black">Your time is live</p><p className="mt-0.5 text-[13px] leading-5 text-black/55">The timer keeps running if you leave or hide the puzzle.</p></div>
+            </div>
           </div>
 
           <div>
-            <h4
-              className="mb-1 font-semibold text-foreground"
-              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
-            >
-              How It Works
-            </h4>
-            <p className="mb-1.5">Words are built from images, letters, and symbols you combine.</p>
-            <p className="mb-0.5">Example (subtraction): 🎺 − 👽 = TRUMP</p>
-            <p>When you see a minus (−), remove the 2nd word from the 1st.</p>
-          </div>
-
-          <div>
-            <h4
-              className="mb-1 font-semibold text-foreground"
-              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
-            >
-              Tips
-            </h4>
-            <ul className="list-inside list-disc space-y-0.5">
-              <li>Images can represent sounds or letters</li>
-              <li>Look for homophones (same sound, different spelling)</li>
-              <li>The number in the top right shows how many letters the answer has.</li>
-              <li>Use hints if needed</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4
-              className="mb-1 font-semibold text-foreground"
-              style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}
-            >
-              Timer
-            </h4>
-            <p>You get one solve per account for each puzzle. Time starts when the clues open and keeps running when you hide the puzzle, leave, or lose your connection.</p>
             {showPlayButton ? (
-              <div className="mt-2 border-t border-border pt-2">
+              <div className="border-t border-black/10 pt-5">
                 <Button
                   type="button"
                   size="xl"
-                  className="w-full text-base font-semibold"
+                  className="h-12 w-full rounded-full bg-black text-base font-semibold text-white hover:bg-black/80"
                   onClick={() => onOpenChange?.(false)}
                 >
                   <Play className="size-5" />
                   Play
                 </Button>
-                <p className="mt-1.5 text-center text-xs text-muted-foreground">Or tap ✕ above to close</p>
+                <p className="mt-2 text-center text-xs text-black/45">One puzzle, every day.</p>
               </div>
             ) : (
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                Tap ✕ above or outside this box to close
-              </p>
+              <p className="text-center text-xs text-black/45">Tap outside this box or press Escape to close.</p>
             )}
           </div>
         </div>
