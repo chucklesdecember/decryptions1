@@ -14,6 +14,7 @@ import { Check } from 'lucide-react';
 import { toast } from 'sonner';
 import posthog from 'posthog-js';
 import { buildShareText, copyShareText } from '../lib/shareResult';
+import { NextPuzzleCountdown } from './NextPuzzleCountdown';
 
 export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: PuzzleSummary; onHome: () => void; onArchive: () => void; onStats: () => void }) {
   const { refreshProgress, isGuest, requireAccount } = useAuth();
@@ -45,7 +46,6 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
     try {
       await copyShareText(buildShareText(formatPuzzleDate(puzzle.date), result.timeSeconds, state?.hintsUsed ?? 0, result.verified));
       setCopied(true);
-      setShare(true);
       toast.success('Result copied — paste it anywhere.');
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -75,6 +75,7 @@ export function GamePage({ puzzle, onHome, onArchive, onStats }: { puzzle: Puzzl
         </div>
         {result && <>
           <p className="text-center">Solved in {formatTime(result.timeSeconds)} with {state.hintsUsed} hint{state.hintsUsed === 1 ? '' : 's'}.</p>
+          <NextPuzzleCountdown />
           {!result.verified && <p className="text-sm text-amber-800">Unverified · recorded before server validation.</p>}
           <div className="flex flex-wrap justify-center gap-2">
             <Button onClick={() => void shareResult()}>{copied && <Check className="mr-2 size-4" />}{copied ? 'Copied!' : 'Share'}</Button>
