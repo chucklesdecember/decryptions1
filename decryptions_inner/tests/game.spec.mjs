@@ -106,7 +106,9 @@ test('daily play resists local score/clock edits, resumes across devices, and re
       await expect(b.page.getByRole('link', { name: 'Read article', exact: true })).toHaveAttribute('href', 'https://example.com/private-headline');
       const result = (await db.admin.query('select * from public.solves where user_id=$1', [ids.alice])).rows;
       expect(result).toHaveLength(1); expect(result[0].verified).toBe(true); expect(result[0].time_seconds).toBeGreaterThanOrEqual(120);
-      await b.page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
+      // Completed games now show the full leaderboard immediately rather than
+      // requiring a separate leaderboard button.
+      await expect(b.page.getByRole('heading', { name: 'Leaderboard', exact: true })).toBeVisible();
       await expect(b.page.getByText('Unverified', { exact: true })).toHaveCount(2);
       await b.page.screenshot({ path: '/tmp/decryptions-solved-mobile.png', fullPage: true });
       expect(await b.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
