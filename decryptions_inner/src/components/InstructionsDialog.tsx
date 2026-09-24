@@ -29,7 +29,7 @@ export function InstructionsDialog({ onOpenChange, open, showPlayButton }: Instr
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl border-2 border-black/10 bg-[#fffdf5] p-0 shadow-2xl sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1.5rem)] touch-pan-y overscroll-contain overflow-y-auto rounded-2xl border-2 border-black/10 bg-[#fffdf5] p-0 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:max-w-lg">
         <DialogHeader className="border-b border-black/10 bg-white px-5 pb-5 pt-7 text-left sm:px-7">
           <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-black/50">
             <span className="flex size-7 items-center justify-center rounded-lg bg-black text-sm font-black text-white">D</span>
